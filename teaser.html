@@ -46,12 +46,12 @@ const A=document.getElementById('a'),B='https://lgroqjniibwgnvddtrbb.supabase.co
 const L=id=>document.getElementById(id);const show=id=>{document.querySelectorAll('.layer').forEach(l=>l.classList.remove('on','fade'));if(id){L(id).classList.add('on','fade');}};
 const st=ms=>{L('st').classList.add('on');document.body.classList.add('shake');setTimeout(()=>{L('st').classList.remove('on');document.body.classList.remove('shake');},ms);};
 /* each track: file, layer, static burst before it (ms), pause before (ms) */
-const PL=[['journaal-fx.mp3','tv',0,0],['sting.mp3','title',900,400],['teaser-bram.mp3','cam',300,300],['slot-tonnie.mp3','end',300,600]];
-let i=-1;
-function next(){i++;if(i>=PL.length){setTimeout(()=>show(null),3500);return;}const [f,layer,burst,gap]=PL[i];
+const PL=[['journaal2-fx.mp3','tv',0,0,99],['sting.mp3','title',700,300,5.5],['teaser-bram2.mp3','cam',250,200,99],['slot-tonnie.mp3','end',250,400,3.6]];
+let i=-1,cap=99;
+function next(){i++;if(i>=PL.length){setTimeout(()=>show(null),2500);return;}const [f,layer,burst,gap,mx]=PL[i];cap=mx;
   const go=()=>{if(burst){show(null);st(burst);}setTimeout(()=>{show(layer);A.src=B+f;A.play().catch(()=>{});},burst);};
   setTimeout(go,gap);}
 A.onended=next;
-let tvTimer=null;A.ontimeupdate=()=>{if(i===0&&A.currentTime>25&&!tvTimer){tvTimer=1;st(220);}};
+let tvTimer=null;A.ontimeupdate=()=>{if(i===0&&A.currentTime>12&&!tvTimer){tvTimer=1;st(220);}if(A.currentTime>=cap){A.pause();next();}};
 L('s').onclick=()=>{L('s').style.display='none';next();};
 </script></body></html>
