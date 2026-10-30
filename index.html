@@ -284,10 +284,12 @@ function showCall(c){AUD.pause();
 }
 
 /* polling */
+let pendingRender=false;
+function sig(n){const t=(n&&n.team)||{};return [t.step_index,t.phase,t.finished_at,JSON.stringify((n&&n.config&&n.config.released)||{})].join('|');}
 function startPoll(){clearInterval(pollTimer);pollTimer=setInterval(async()=>{if(!code)return;try{const n=await api({action:S&&S.admin?'admin_state':'state',code});
-  const strip=t=>{const x={...t};delete x.last_lat;delete x.last_lng;delete x.last_seen;delete x.last_acc;return x;};const changed=JSON.stringify(strip(n.team))!==JSON.stringify(strip(S.team))||JSON.stringify(n.config.released)!==JSON.stringify(S.config.released)||(n.admin&&JSON.stringify(n.teams)!==JSON.stringify(S.teams));
-  if(changed){const playing=!AUD.paused;S=n;if(!playing&&!callLayer.innerHTML)render();}}catch(e){}},S&&S.admin?6000:12000);}
-
+  const changed=S&&S.admin?(JSON.stringify(n.teams)!==JSON.stringify(S.teams)||JSON.stringify(n.config.released)!==JSON.stringify(S.config.released)):sig(n)!==sig(S);
+  S=n;if(changed)pendingRender=true;
+  if(pendingRender&&AUD.paused&&!callLayer.innerHTML&&!(document.activeElement&&document.activeElement.tagName==='INPUT')){pendingRender=false;render();}}catch(e){}},S&&S.admin?6000:12000);}
 /* admin */
 function renderAdmin(){const stops=S.config.stops,rel=S.config.released||{};player=new Player(S.intro,'Opening · samen bij de start');
   const rows=(S.teams||[]).map(t=>{const st=S.steps_for(t)[t.step_index];const stop=st&&stops[st.stop];let d='';if(t.last_lat&&stop)d=Math.round(hav({lat:t.last_lat,lng:t.last_lng},stop))+' m van '+st.title+', ';const seen=t.last_seen?Math.round((Date.now()-new Date(t.last_seen).getTime())/60000)+' min geleden':'nog niet gezien';
