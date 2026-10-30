@@ -195,7 +195,7 @@ function renderIntro(msg){
     try{S=await api({action:'login',code:c});code=c;try{localStorage.setItem(LS,c)}catch(e){}startPoll();render();}catch(e){document.getElementById('err').textContent=e.message;}};
   document.getElementById('go').onclick=go;inp.onkeydown=e=>{if(e.key==='Enter')go()};
 }
-function vBrief(st){const t=S.team;player=new Player(st.audio,'Teambriefing');const rel=S.config.released.start;
+function vBrief(st){const t=S.team;player=new Player(st.audio,'Teambriefing');const rel=S.config.released.start||(t.code||'').startsWith('TEST');
   return shell(st,`${st.photo?`<div class="polaroid"><img src="${esc(st.photo)}" alt=""></div>`:''}<div class="paper c tape l" style="padding-top:26px"><div class="lbl">Jullie verdachte</div><h1>${esc(t.suspect)}</h1></div><div class="sp"></div>${player.html()}<div class="pintro"><b style="color:#fff">Eerste stop:</b> ${esc(st.nextHint||'')}</div><div class="err" id="err"></div>`,
    `<button class="btn ${rel?'':'quiet'}" id="next">${rel?'We gaan op pad':'Wachten op de start'}</button>`,{title:'Briefing'});}
 function vTravel(st){const ra=st.routeAudio&&st.routeAudio.length;if(ra)player=new Player(st.routeAudio,'Waar moet je heen');
