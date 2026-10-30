@@ -136,11 +136,30 @@ h2{font-family:var(--disp);font-size:30px;font-weight:400;letter-spacing:.03em;l
 .vermist .vh{font-family:var(--hand);font-size:22px;color:#1b2c6e;position:absolute;left:12px;bottom:-30px;transform:rotate(-5deg);text-shadow:0 1px 0 rgba(255,255,255,.2)}
 .titlebig{font-family:var(--disp);font-size:52px;line-height:.9;letter-spacing:.02em;color:#fff;text-transform:uppercase;text-shadow:0 4px 30px rgba(0,0,0,.9)}
 .titlebig i{color:var(--red2);font-style:normal}
+
+/* events */
+.msg{position:fixed;left:12px;right:12px;top:calc(var(--sat) + 10px);z-index:60;background:rgba(28,28,30,.96);backdrop-filter:blur(14px);border-radius:18px;padding:12px 14px;color:#fff;font:15px -apple-system,system-ui,sans-serif;box-shadow:0 10px 40px rgba(0,0,0,.7);transform:translateY(-140%);transition:transform .45s cubic-bezier(.2,.9,.3,1.1);display:flex;gap:12px;align-items:flex-start}
+.msg.on{transform:none}
+.msg .ic{width:38px;height:38px;border-radius:9px;background:#34c759;display:flex;align-items:center;justify-content:center;flex:none;font-size:20px}
+.msg .mh{display:flex;justify-content:space-between;font-size:12px;color:#9a9a9e;margin-bottom:2px}
+.msg .mt{min-height:20px;white-space:pre-wrap}
+.flash{position:fixed;inset:0;z-index:70;background:#000 center/cover no-repeat;pointer-events:none;opacity:0;transition:opacity .08s}
+.flash.on{opacity:1}
+.flash .ts{position:absolute;left:14px;top:calc(var(--sat) + 14px);font:700 14px var(--mono);color:#fff;letter-spacing:.06em;text-shadow:0 0 4px #000}
+.glitch{position:fixed;inset:0;z-index:65;pointer-events:none;display:none;background:repeating-linear-gradient(0deg,rgba(255,255,255,.08) 0 2px,transparent 2px 5px),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E");mix-blend-mode:screen}
+.glitch.on{display:block;animation:gj .35s steps(6) 1}
+@keyframes gj{0%{transform:translate(0,0)}20%{transform:translate(-8px,3px)}40%{transform:translate(6px,-2px)}60%{transform:translate(-3px,6px)}80%{transform:translate(9px,0)}100%{transform:none}}
+body.shake #app{animation:gj .35s steps(6) 1}
+.listen{position:fixed;inset:0;z-index:66;display:none;align-items:center;justify-content:center;pointer-events:none;background:rgba(0,0,0,.55)}
+.listen.on{display:flex;animation:lis 1.3s steps(3) 1}
+.listen b{font-family:var(--disp);font-size:44px;letter-spacing:.08em;color:var(--red2);text-transform:uppercase;text-align:center;line-height:1}
+@keyframes lis{0%{opacity:0}30%{opacity:1}90%{opacity:1}100%{opacity:0}}
+.team.alt{background:#fff;color:#000}
 </style>
 </head>
 <body>
 <div id="app"></div>
-<div id="callLayer"></div>
+<div id="callLayer"></div><div class="flash" id="flash"><div class="ts" id="flashts"></div></div><div class="glitch" id="glitch"></div><div class="listen" id="listen"><b>Hij luistert<br>ook</b></div>
 
 <script>
 const IMG='https://lgroqjniibwgnvddtrbb.supabase.co/storage/v1/object/public/audio/';const API='https://lgroqjniibwgnvddtrbb.supabase.co/functions/v1/game/api',LS='sluitingstijd_code';
@@ -165,7 +184,7 @@ AUD=newEl();
 function route(){if(boosted||!BOOST)return;try{ACX=ACX||new (window.AudioContext||window.webkitAudioContext)();const src=ACX.createMediaElementSource(AUD);const comp=ACX.createDynamicsCompressor();comp.threshold.value=-24;comp.knee.value=20;comp.ratio.value=6;comp.attack.value=0.003;comp.release.value=0.25;const g=ACX.createGain();g.gain.value=2.2;AN=ACX.createAnalyser();AN.fftSize=512;src.connect(comp);comp.connect(g);g.connect(AN);AN.connect(ACX.destination);boosted=true;}catch(e){BOOST=false;}}
 function unboost(){BOOST=false;boosted=false;AN=null;try{AUD.pause();}catch(e){}const i=player?player.i:0,t=AUD.currentTime||0,was=!AUD.paused;AUD=newEl();if(player&&player.load){player.load(i);try{AUD.currentTime=t;}catch(e){}if(was)AUD.play().catch(()=>{});}}
 setInterval(()=>{if(!boosted||!AN||AUD.paused||AUD.currentTime<2)return;const d=new Uint8Array(AN.fftSize);AN.getByteTimeDomainData(d);let s=0;for(let i=0;i<d.length;i++)s+=Math.abs(d[i]-128);if(s===0)unboost();},1000);
-function unlock(){if(unlocked)return;unlocked=true;try{route();if(ACX&&ACX.state==='suspended')ACX.resume();AUD.src=SILENT;AUD.play().catch(()=>{});}catch(e){}}
+function unlock(){if(unlocked)return;unlocked=true;try{route();if(ACX&&ACX.state==='suspended')ACX.resume();AUD.src=SILENT;AUD.play().catch(()=>{});FX.src=SILENT;FX.play().catch(()=>{});}catch(e){}}
 document.addEventListener('touchend',unlock,{once:true,passive:true});document.addEventListener('click',unlock,{once:true});
 document.addEventListener('touchend',()=>{if(ACX&&ACX.state==='suspended')ACX.resume();},{passive:true});document.addEventListener('click',()=>{if(ACX&&ACX.state==='suspended')ACX.resume();});
 const PLAYED=new Set();
@@ -203,7 +222,7 @@ function render(){killPlayer();clearTimeout(callTimer);document.body.classList.r
   else if(t.phase==='audio')app.innerHTML=vStop(st);
   else if(t.phase==='solved')app.innerHTML=vSolved(st);
   app.classList.toggle('compact',window.innerHeight<760);
-  bind(st);scheduleCall(st);
+  bind(st);scheduleCall(st);scheduleEvents(st);
 }
 /* intro: start, location, code */
 function renderIntro(msg){
@@ -220,16 +239,16 @@ function vBrief(st){const t=S.team;player=new Player(st.audio,'Teambriefing');co
   return shell(st,`${st.photo?`<div class="polaroid"><img src="${esc(st.photo)}" alt=""></div>`:''}<div class="paper c tape l" style="padding-top:26px"><div class="lbl">Jullie verdachte</div><h1>${esc(t.suspect)}</h1></div><div class="sp"></div>${player.html()}<div class="pintro"><b style="color:#fff">Eerste stop:</b> ${esc(st.nextHint||'')}</div><div class="err" id="err"></div>`,
    `<button class="btn ${rel?'':'quiet'}" id="next">${rel?'We gaan op pad':'Wachten op de start'}</button>`,{title:'Briefing'});}
 function vTravel(st){const ra=st.routeAudio&&st.routeAudio.length;if(ra)player=new Player(st.routeAudio,'Waar moet je heen');
-  return shell(st,`${ra?'<div class="miniwrap">'+player.html()+'</div><div class="sp"></div>':''}<div class="paper c r tape"><div class="lbl">Volgende plek</div><h2>${esc(st.hint)}</h2></div><div class="chip" id="dist"><span class="dot"></span>Locatie zoeken</div><div class="err" id="err"></div>`,
-   `<button class="btn" id="arrive">We zijn op de locatie</button>`,{title:'Onderweg naar stop '+(st.n||'')});}
+  return shell(st,`${ra?'<div class="miniwrap">'+player.html()+'</div><div class="sp"></div>':''}<div class="paper c r tape"><div class="lbl">Waar het spoor heen leidt</div><h2>${esc(st.hint)}</h2></div><div class="chip" id="dist"><span class="dot"></span>Locatie zoeken</div><div class="err" id="err"></div>`,
+   `<button class="btn" id="arrive">We zijn op de locatie</button>`,{title:'Spoor '+(st.n||'')+' van 5'});}
 function vStop(st){const hasIntro=st.audioIntro&&st.audioIntro.length;const ans=(st.audioAns&&st.audioAns.length)?st.audioAns:st.audio;
   if(!st.question){player=new Player((hasIntro?st.audioIntro:[]).concat(ans||[]),st.audioLabel||'Fragment',()=>{const b=document.getElementById('done');if(b){b.classList.remove('quiet');b.textContent='Verder';}const m=document.getElementById('mon');if(m&&m.reveal)m.reveal();});
-    return shell(st,`${player.html()}<div class="pintro">${esc(st.intro||'')}</div>${monitor(st.key,true)}<div class="sp"></div><div class="paper c tape"><div class="lbl">Luister samen</div><h2 style="font-size:22px">Geen opdracht hier. Luister naar het bandje, dan gaan jullie verder.</h2></div><div class="err" id="err"></div>`,`<button class="btn quiet" id="done">Eerst luisteren</button>`,{title:'Stop '+st.n+' · '+st.title});}
+    return shell(st,`${player.html()}<div class="pintro">${esc(st.intro||'')}</div>${monitor(st.key,true)}<div class="sp"></div><div class="paper c tape"><div class="lbl">De laatste opname van Marloes</div><h2 style="font-size:22px">Luister. Daarna weten jullie waar de laatste twee sporen heen leiden.</h2></div><div class="err" id="err"></div>`,`<button class="btn quiet" id="done">Eerst luisteren</button>`,{title:'Stop '+st.n+' · '+st.title});}
   player=new Player(hasIntro?st.audioIntro:ans,st.audioLabel||'Fragment',()=>{if(hasIntro)stage('q');else stage('in');});
   return shell(st,`<div id="s_intro">${player.html()}<div class="pintro">${esc(st.intro||'')}</div></div>
-<div id="s_q" class="hidden"><div class="paper c tape"><span class="stampw">Opdracht ${st.n}</span><div class="lbl">Let op tijdens het fragment</div><h2 style="font-size:24px">${esc(st.question)}</h2>${st.do?`<p><b>Eerst dit:</b> ${esc(st.do)}</p>`:''}</div></div>
+<div id="s_q" class="hidden"><div class="paper c tape"><span class="stampw">Opdracht ${st.n}</span><div class="lbl">Luister. Eén ding klopt niet.</div><h2 style="font-size:24px">${esc(st.question)}</h2>${st.do?`<p><b>Eerst dit:</b> ${esc(st.do)}</p>`:''}</div></div>
 <div id="s_ans" class="hidden"><div class="disc" id="disc2"><svg class="ring" viewBox="0 0 200 200"><circle cx="100" cy="100" r="96" stroke="#232323" stroke-width="3" fill="none"/><circle id="ring2" cx="100" cy="100" r="96" stroke="#e5162f" stroke-width="3" fill="none" stroke-dasharray="603" stroke-dashoffset="603" stroke-linecap="round"/></svg><div class="pb" id="pb2">${PLAY}</div></div><div class="ptitle">${esc(st.audioLabel||'Fragment')}</div><div class="ptime" id="ptime2">0:00</div><div class="pintro">${esc(st.question)}</div></div>
-<div id="s_in" class="hidden"><div class="paper tape"><span class="stampw">Opdracht ${st.n}</span><div class="lbl">Jullie antwoord</div><p style="margin-top:0;font-weight:700">${esc(st.question)}</p><input id="ans" placeholder="Typ hier" autocapitalize="none" autocomplete="off" spellcheck="false"><div class="err" id="err"></div>${BLOOD}</div></div>`,
+<div id="s_in" class="hidden"><div class="paper tape"><span class="stampw">Opdracht ${st.n}</span><div class="lbl">Wat hebben jullie gehoord?</div><p style="margin-top:0;font-weight:700">${esc(st.question)}</p><input id="ans" placeholder="Typ hier" autocapitalize="none" autocomplete="off" spellcheck="false"><div class="err" id="err"></div>${BLOOD}</div></div>`,
    `<button class="btn dark hidden" id="toggle">Fragment</button><button class="btn" id="check">${hasIntro?'Naar de opdracht':'Naar het antwoord'}</button>`,{title:'Stop '+st.n+' · '+st.title});}
 let stageNow='intro';
 function stage(k){const st=S.steps[S.team.step_index];stageNow=k;['intro','q','ans','in'].forEach(x=>{const e=document.getElementById('s_'+x);if(e)e.classList.toggle('hidden',x!==k);});
@@ -240,11 +259,12 @@ function stage(k){const st=S.steps[S.team.step_index];stageNow=k;['intro','q','a
   else if(k==='in'){AUD.pause();ck.textContent='Controleer';const i=document.getElementById('ans');if(i)setTimeout(()=>i.focus(),50);}
 }
 function vSolved(st){return shell(st,`<div class="paper c tape"><span class="stampw" style="transform:rotate(-8deg);left:12px;right:auto">Klopt</span><div class="lbl" style="margin-top:8px">Wat we nu weten</div><h2>${esc(st.after||'')}</h2></div>${monitor(st.key)}<div class="err" id="err"></div>`,`<button class="btn" id="next">Verder</button>`,{title:'Stop '+st.n+' · '+st.title});}
-function vWait(st){return shell(st,`<div class="paper c tape"><div class="lbl">Corona</div><h1>Even pauze</h1><p>${esc(st.waitText||'')}</p></div><div class="chip"><span class="dot"></span>Geen opdracht · het bandje volgt</div>`,'',{title:st.title});}
+function vWait(st){return shell(st,`<div class="paper c tape"><div class="lbl">Tussenstop</div><h1>Hij luistert ook</h1><p>${esc(st.waitText||'')}</p></div><div class="chip"><span class="dot"></span>Geen opdracht. Het bandje volgt.</div>`,'',{title:st.title});}
 function vFinal(st){const t=S.team;
-  if(t.phase==='travel')return shell(st,`<div class="paper c tape"><div class="lbl">De laatste plek</div><h2>${esc(st.hint)}</h2></div><div class="chip" id="dist"><span class="dot"></span>Locatie zoeken</div><div class="err" id="err"></div>`,`<button class="btn" id="arrive">We zijn op de locatie</button>`,{title:'De laatste stop'});
-  if(t.phase==='solved'){player=new Player(st.audio,'Aflevering 7 · Het slot',()=>{const m=document.getElementById('mon');if(m&&m.reveal)m.reveal();});
-    return shell(st,`${player.html()}${monitor('final',true)}<div class="sp"></div><div class="paper c tape"><span class="stampw">Gesloten</span><div class="lbl" style="margin-top:8px">Dossier 98-1103</div><h2>Jullie zijn er. Dit is het einde van de route.</h2></div><div class="rank"><div class="r"><span>Onze tijd</span><b>${esc(t.duration||'')}</b></div>${(S.ranking||[]).map((r,i)=>`<div class="r"><span>${i+1}. ${esc(r.name)}</span><b>${esc(r.duration)}</b></div>`).join('')}</div>`,'',{title:'Zaak gesloten'});}
+  if(t.phase==='travel')return shell(st,`<div class="paper c tape"><div class="lbl">Waar het eindigt</div><h2>${esc(st.hint)}</h2></div><div class="chip" id="dist"><span class="dot"></span>Locatie zoeken</div><div class="err" id="err"></div>`,`<button class="btn" id="arrive">We zijn op de locatie</button>`,{title:'Het laatste spoor'});
+  if(t.phase==='solved'){const slot=S.config.released.slot;player=new Player(st.audio,'Aflevering 7 · Het slot',()=>{const m=document.getElementById('mon');if(m&&m.reveal)m.reveal();});
+    if(!slot)return shell(st,`<div class="paper c tape"><div class="lbl">Jullie zijn er</div><h2>Ga zitten. Niet aan de bar.</h2><p>Jullie tijd staat stil. Luister naar de laatste aflevering, dan wachten we op de anderen. Dit hoort iedereen tegelijk af te maken.</p></div><div class="sp"></div>${player.html()}${monitor('final',true)}<div class="err" id="err"></div>`,'',{title:'Het laatste spoor'});
+    return shell(st,`<div class="paper c tape"><span class="stampw">Gesloten</span><div class="lbl" style="margin-top:8px">Dossier 98-1103</div><h2>Antonius Smits. De gang tussen de kelders. En een nichtje dat zweeg.</h2></div><div class="rank"><div class="r"><span>Onze tijd</span><b>${esc(t.duration||'')}</b></div>${(S.ranking||[]).map((r,i)=>`<div class="r"><span>${i+1}. ${esc(r.name)}</span><b>${esc(r.duration)}</b></div>`).join('')}</div><div class="sp"></div>${player.html()}${monitor('final')}`,'',{title:'Zaak gesloten'});}
   return shell(st,`<div class="paper c tape"><div class="lbl">Café JoJo</div><h2>Even geduld</h2></div>`,'',{title:'Café JoJo'});}
 
 function bind(st){if(player)player.bind(true);bindMonitor();
@@ -268,14 +288,48 @@ function bindMonitor(){const m=document.getElementById('mon'),v=document.getElem
   t.onclick=play;v.onclick=()=>{if(v.paused)play();else v.pause();};v.onended=()=>{m.classList.remove('playing');t.textContent='Nog een keer';};
   m.reveal=()=>{m.classList.remove('hidden');m.scrollIntoView({behavior:'smooth',block:'center'});};}
 
+
+/* things that happen in between */
+const FX=new Audio();FX.preload='auto';
+function once(k){const key='ev_'+code+'_'+k;try{if(localStorage.getItem(key))return false;localStorage.setItem(key,'1');}catch(e){}return true;}
+function vib(p){try{if(navigator.vibrate)navigator.vibrate(p);}catch(e){}}
+const KNOCK=[220,160,220,160,220,650,220,650,220,160,220,160,220,160,220];
+function sfx(name,vol){try{FX.pause();FX.src='/sfx/'+name+'.mp3';FX.volume=vol==null?.7:vol;FX.currentTime=0;FX.play().catch(()=>{});}catch(e){}}
+function glitch(ms){const g=document.getElementById('glitch');g.classList.remove('on');void g.offsetWidth;g.classList.add('on');document.body.classList.add('shake');sfx('static',.5);setTimeout(()=>{g.classList.remove('on');document.body.classList.remove('shake');},ms||350);}
+function showMsg(text,opts={}){let m=document.getElementById('msg');if(!m){m=document.createElement('div');m.id='msg';m.className='msg';document.body.appendChild(m);}
+  m.innerHTML=`<div class="ic">💬</div><div style="flex:1;min-width:0"><div class="mh"><span>Onbekend nummer</span><span>nu</span></div><div class="mt" id="mtxt"></div></div>`;
+  vib([80,60,80]);requestAnimationFrame(()=>m.classList.add('on'));
+  const t=document.getElementById('mtxt');let i=0;const type=setInterval(()=>{i++;t.textContent=text.slice(0,i);if(i>=text.length)clearInterval(type);},45);
+  const hold=(opts.hold||7)*1000+text.length*45;
+  setTimeout(()=>{let j=text.length;const del=setInterval(()=>{j--;t.textContent=text.slice(0,j);if(j<=0){clearInterval(del);t.textContent='Bericht verwijderd';setTimeout(()=>m.classList.remove('on'),1600);}},35);},hold);}
+function flashCam(ms){const f=document.getElementById('flash');f.style.backgroundImage="url('/video/cam1-frame.jpg')";document.getElementById('flashts').textContent='WHY NOT KELDER 1   03-11-1998  02:51:18';f.classList.add('on');sfx('static-long',.6);vib(KNOCK);setTimeout(()=>f.classList.remove('on'),ms||2200);}
+function clockGlitch(){const c=document.getElementById('clock'),t=document.querySelector('.team');if(!c||!t)return;const name=t.textContent;c.textContent='02:50:00';c.classList.add('low');t.textContent='MARLOES';t.classList.add('alt');glitch(300);setTimeout(()=>{c.textContent=leftTxt();c.classList.remove('low');t.textContent=name;t.classList.remove('alt');},1300);}
+let evTimers=[];
+function scheduleEvents(st){evTimers.forEach(clearTimeout);evTimers=[];if(!S||S.admin||!S.team)return;const t=S.team;const at=(sec,k,fn)=>{if(!once.peek(k))return;evTimers.push(setTimeout(()=>{if(once(k))fn();},sec*1000));};
+  if(t.phase==='travel'&&st.n===1)at(40,'msg1',()=>showMsg('Tel jullie even. Ik tel er één meer.'));
+  if(t.phase==='wait')at(80,'msg2',()=>showMsg('Ik zit twee tafels achter jullie.'));
+  if(t.phase==='travel'&&(st.n===4||st.n===5))at(45,'clock',clockGlitch);
+  if(t.phase==='travel'&&st.key==='final')at(160,'msg3',()=>showMsg('Zelfde kruk. Kom maar.',{hold:9}));
+  if(t.phase==='solved'&&st.key==='final'&&!S.config.released.slot)at(30,'kruk',()=>showMsg('Jullie zitten op mijn kruk.',{hold:8}));
+  if(t.phase==='solved'&&st.key==='final'&&S.config.released.slot)at(0.3,'slot',()=>{flashCam(2600);setTimeout(()=>showMsg('Ik zit twee krukken van jullie vandaan.',{hold:10}),3200);});
+  if(t.phase==='solved'&&st.whisperAudio&&st.whisperAudio.length)at(1.2,'wh_'+st.key,()=>{try{AUD.pause();AUD.onended=null;AUD.ontimeupdate=null;AUD.loop=false;AUD.src=st.whisperAudio[0];AUD.play().catch(()=>{});}catch(e){}});
+}
+once.peek=k=>{try{return !localStorage.getItem('ev_'+code+'_'+k);}catch(e){return true;}};
+function afterCall(key){if(key==='C'){setTimeout(()=>flashCam(2200),900);}if(key==='final'){setTimeout(()=>showMsg('Zelfde kruk. Kom maar.',{hold:9}),2500);try{localStorage.setItem('ev_'+code+'_msg3','1');}catch(e){}}}
+/* random static when idle, and the watcher */
+let lastTouch=Date.now(),lastListen=0;document.addEventListener('touchstart',()=>{lastTouch=Date.now();},{passive:true});document.addEventListener('click',()=>{lastTouch=Date.now();});
+setInterval(()=>{if(!S||S.admin||!S.team||!unlocked)return;if(!AUD.paused||callLayer.innerHTML||document.getElementById('timeup'))return;
+  if(Math.random()<0.22)glitch(300);
+  const idle=Date.now()-lastTouch;if(idle>45000&&Date.now()-lastListen>120000){lastListen=Date.now();const l=document.getElementById('listen');l.classList.remove('on');void l.offsetWidth;l.classList.add('on');sfx('static',.35);vib([40,40,40]);}},15000);
+
 /* the call */
 function scheduleCall(st){if(!st.call||!st.call.audio||!st.call.audio.length)return;if(S.team.phase!=='travel')return;const k='call_'+code+'_'+st.key;try{if(localStorage.getItem(k))return;}catch(e){}
-  callTimer=setTimeout(()=>{try{localStorage.setItem(k,'1')}catch(e){}showCall(st.call);},(st.call.delay||60)*1000);}
-function showCall(c){AUD.pause();
+  callTimer=setTimeout(()=>{try{localStorage.setItem(k,'1')}catch(e){}showCall(st.call,()=>afterCall(st.key));},(st.call.delay||60)*1000);}
+function showCall(c,after){AUD.pause();
   callLayer.innerHTML=`<div class="call"><div><div class="av">?</div><div class="name">Onbekend nummer</div><div class="st" id="cst">Inkomende oproep</div></div><div class="acts"><button class="cbtn no" id="cno">${PHONE}</button><button class="cbtn ok" id="cok">${PHONE}</button></div></div>`;
   try{if(navigator.vibrate)navigator.vibrate([600,400,600,400,600,400,600,400,600]);}catch(e){}
   if(c.ring){AUD.onended=null;AUD.ontimeupdate=null;AUD.src=c.ring;AUD.loop=true;AUD.play().catch(()=>{});}
-  const end=()=>{callLayer.innerHTML='';AUD.pause();AUD.loop=false;try{navigator.vibrate&&navigator.vibrate(0);}catch(e){}};
+  let done=false;const end=()=>{callLayer.innerHTML='';AUD.pause();AUD.loop=false;try{navigator.vibrate&&navigator.vibrate(0);}catch(e){}if(!done){done=true;if(after)after();}};
   document.getElementById('cno').onclick=end;
   document.getElementById('cok').onclick=()=>{AUD.pause();AUD.loop=false;try{navigator.vibrate&&navigator.vibrate(0);}catch(e){}
     const st=document.getElementById('cst');document.querySelector('.acts').innerHTML=`<button class="cbtn no" id="cend">${PHONE}</button>`;document.getElementById('cend').onclick=end;
@@ -295,7 +349,7 @@ function renderAdmin(){const stops=S.config.stops,rel=S.config.released||{};play
   const rows=(S.teams||[]).map(t=>{const st=S.steps_for(t)[t.step_index];const stop=st&&stops[st.stop];let d='';if(t.last_lat&&stop)d=Math.round(hav({lat:t.last_lat,lng:t.last_lng},stop))+' m van '+st.title+', ';const seen=t.last_seen?Math.round((Date.now()-new Date(t.last_seen).getTime())/60000)+' min geleden':'nog niet gezien';
     return `<div class="row"><div class="l"><b>${esc(t.name)}</b>${t.help?'<span class="badge help">hulp</span>':''}${t.finished_at?'<span class="badge ok">'+esc(t.duration)+'</span>':''}<span>${st?esc(st.title):'klaar'}, ${esc(t.phase)}</span><span>${d}${seen}</span><span>${esc(t.code)}</span></div><div><button class="mini red" data-op="skip" data-code="${esc(t.code)}">Zet door</button><button class="mini" data-op="back" data-code="${esc(t.code)}">Terug</button><button class="mini" data-op="clearhelp" data-code="${esc(t.code)}">Hulp ok</button><button class="mini" data-op="reset" data-code="${esc(t.code)}">Reset</button></div></div>`;}).join('');
   app.innerHTML=`<header><div class="hl"><span class="team">Spelleider</span><span class="clock" id="clock">${leftTxt()}</span></div></header><main style="align-items:center">${player.html()}<div class="sp"></div><div style="width:100%">
-   <div class="card"><h3>Vrijgeven</h3><button class="mini ${rel.start?'':'red'}" data-op="release" data-key="start">${rel.start?'Start is vrij':'Geef de start vrij'}</button><button class="mini ${rel.corona?'':'red'}" data-op="release" data-key="corona">${rel.corona?'Corona is vrij':'Geef Corona vrij'}</button></div>
+   <div class="card"><h3>Vrijgeven</h3><button class="mini ${rel.start?'':'red'}" data-op="release" data-key="start">${rel.start?'Start is vrij':'Geef de start vrij'}</button><button class="mini ${rel.corona?'':'red'}" data-op="release" data-key="corona">${rel.corona?'Corona is vrij':'Geef Corona vrij'}</button><button class="mini ${rel.slot?'':'red'}" data-op="release" data-key="slot">${rel.slot?'Slot is vrij':'Geef het slot vrij (JoJo)'}</button></div>
    <div class="card"><h3>Teams</h3>${rows}</div>
    <div class="card"><h3>Stops ijken</h3><div style="font-size:12px;color:var(--ink2);margin:0 0 10px">Sta op de plek en druk op de knop. Straal ${S.config.radius} m.</div>${Object.keys(stops).map(k=>`<button class="mini" data-op="calib" data-stop="${k}">${esc(stops[k].name)}</button>`).join('')}<div class="err" id="err"></div></div></div></main><footer><button class="btn quiet" id="logout">Uitloggen</button></footer>`;
   document.body.classList.add('adm');player.bind();
