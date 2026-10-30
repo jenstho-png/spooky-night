@@ -214,6 +214,7 @@ function render(){killPlayer();clearTimeout(callTimer);document.body.classList.r
   if(!S)return renderIntro();
   if(S.admin)return renderAdmin();
   const t=S.team,st=S.steps[t.step_index];if(!st)return;
+  if(t.step_index===0){try{Object.keys(localStorage).filter(k=>k.startsWith('ev_'+code)||k.startsWith('call_'+code)).forEach(k=>localStorage.removeItem(k));}catch(e){}}
   if(expired()&&!t.finished_at){app.innerHTML=`<header><div class="hl"><span class="team">${esc(t.name)}</span><span class="clock low">0:00</span></div></header><main id="timeup"><div class="paper c tape"><div class="lbl">Sluitingstijd</div><h1>Het is negen uur</h1><p>De zaak is niet rond. Kom nu naar Café JoJo, Van Welderenstraat 87. Daar hoor je hoe het zit.</p></div></main><footer></footer>`;return;}
   if(st.key==='brief')app.innerHTML=vBrief(st);
   else if(st.key==='final')app.innerHTML=vFinal(st);
