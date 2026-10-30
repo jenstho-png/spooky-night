@@ -1,0 +1,27 @@
+name: fetch-audio
+on:
+  push:
+    paths: ['audio-list.txt', '.github/workflows/fetch-audio.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download audio files listed in audio-list.txt
+        run: |
+          mkdir -p audio
+          while read -r f; do
+            [ -z "$f" ] && continue
+            curl -fsSL "https://lgroqjniibwgnvddtrbb.supabase.co/storage/v1/object/public/audio/$f" -o "audio/$f"
+          done < audio-list.txt
+          ls -la audio
+      - name: Commit
+        run: |
+          git config user.name "audio-bot"
+          git config user.email "audio-bot@users.noreply.github.com"
+          git add audio
+          git commit -m "Audio uit opslag" || echo "nothing to commit"
+          git push
