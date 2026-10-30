@@ -108,6 +108,14 @@ h2{font-family:var(--disp);font-size:30px;font-weight:400;letter-spacing:.03em;l
 .compact .polaroid img{width:96px;height:96px}
 .compact .title{font-size:54px}
 .compact .sp{height:12px}
+.monitor{width:100%;max-width:360px;margin-top:18px;background:#0a0a0a;border:2px solid #2a2a2a;border-radius:4px;padding:6px;box-shadow:0 0 0 1px #000,0 18px 40px rgba(0,0,0,.7);position:relative}
+.monitor video{display:block;width:100%;aspect-ratio:16/9;background:#000;object-fit:cover;filter:contrast(1.08) brightness(.95)}
+.monitor .scan{position:absolute;left:6px;right:6px;top:6px;aspect-ratio:16/9;pointer-events:none;background:repeating-linear-gradient(0deg,rgba(0,0,0,.18) 0 1px,transparent 1px 3px);mix-blend-mode:multiply}
+.monitor .mlabel{font-family:'Courier Prime',monospace;font-size:10px;letter-spacing:.14em;color:#8a8a8a;text-transform:uppercase;padding:7px 2px 2px;display:flex;justify-content:space-between}
+.monitor .mlabel i{color:#e5162f;font-style:normal;animation:blink 1.2s steps(2) infinite}
+@keyframes blink{to{opacity:0}}
+.monitor .tap{position:absolute;left:6px;right:6px;top:6px;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;font-family:Anton,sans-serif;font-size:18px;letter-spacing:.08em;color:#fff;background:rgba(0,0,0,.45);text-transform:uppercase}
+.monitor.playing .tap{display:none}
 </style>
 </head>
 <body>
@@ -192,8 +200,8 @@ function vTravel(st){const ra=st.routeAudio&&st.routeAudio.length;if(ra)player=n
   return shell(st,`${ra?player.html()+'<div class="sp"></div>':''}<div class="paper c r tape"><div class="lbl">Volgende plek</div><h2>${esc(st.hint)}</h2></div><div class="chip" id="dist"><span class="dot"></span>Locatie zoeken</div><div class="err" id="err"></div>`,
    `<button class="btn" id="arrive">We zijn op de locatie</button>`,{title:'Onderweg naar stop '+(st.n||'')});}
 function vStop(st){const hasIntro=st.audioIntro&&st.audioIntro.length;const ans=(st.audioAns&&st.audioAns.length)?st.audioAns:st.audio;
-  if(!st.question){player=new Player((hasIntro?st.audioIntro:[]).concat(ans||[]),st.audioLabel||'Fragment',()=>{const b=document.getElementById('done');if(b){b.classList.remove('quiet');b.textContent='Verder';}});
-    return shell(st,`${player.html()}<div class="pintro">${esc(st.intro||'')}</div><div class="sp"></div><div class="paper c tape"><div class="lbl">Luister samen</div><h2 style="font-size:22px">Geen opdracht hier. Luister naar het bandje, dan gaan jullie verder.</h2></div><div class="err" id="err"></div>`,`<button class="btn quiet" id="done">Eerst luisteren</button>`,{title:'Stop '+st.n+' · '+st.title});}
+  if(!st.question){player=new Player((hasIntro?st.audioIntro:[]).concat(ans||[]),st.audioLabel||'Fragment',()=>{const b=document.getElementById('done');if(b){b.classList.remove('quiet');b.textContent='Verder';}const m=document.getElementById('mon');if(m&&m.reveal)m.reveal();});
+    return shell(st,`${player.html()}<div class="pintro">${esc(st.intro||'')}</div>${monitor(st.key,true)}<div class="sp"></div><div class="paper c tape"><div class="lbl">Luister samen</div><h2 style="font-size:22px">Geen opdracht hier. Luister naar het bandje, dan gaan jullie verder.</h2></div><div class="err" id="err"></div>`,`<button class="btn quiet" id="done">Eerst luisteren</button>`,{title:'Stop '+st.n+' · '+st.title});}
   player=new Player(hasIntro?st.audioIntro:ans,st.audioLabel||'Fragment',()=>{if(hasIntro)stage('q');else stage('in');});
   return shell(st,`<div id="s_intro">${player.html()}<div class="pintro">${esc(st.intro||'')}</div></div>
 <div id="s_q" class="hidden"><div class="paper c tape"><span class="stampw">Opdracht ${st.n}</span><div class="lbl">Let op tijdens het fragment</div><h2 style="font-size:24px">${esc(st.question)}</h2>${st.do?`<p><b>Eerst dit:</b> ${esc(st.do)}</p>`:''}</div></div>
@@ -208,15 +216,15 @@ function stage(k){const st=S.steps[S.team.step_index];stageNow=k;['intro','q','a
   else if(k==='ans'){ck.textContent='Naar het antwoord';const ans=(st.audioAns&&st.audioAns.length)?st.audioAns:st.audio;killPlayer();player=new Player(ans,st.audioLabel||'Fragment',()=>stage('in'));player.ids={pb:'pb2',disc:'disc2',ring:'ring2',pt:'ptime2'};player.bind(true);}
   else if(k==='in'){AUD.pause();ck.textContent='Controleer';const i=document.getElementById('ans');if(i)setTimeout(()=>i.focus(),50);}
 }
-function vSolved(st){return shell(st,`<div class="paper c tape"><span class="stampw" style="transform:rotate(-8deg);left:12px;right:auto">Klopt</span><div class="lbl" style="margin-top:8px">Wat we nu weten</div><h2>${esc(st.after||'')}</h2></div><div class="err" id="err"></div>`,`<button class="btn" id="next">Verder</button>`,{title:'Stop '+st.n+' · '+st.title});}
+function vSolved(st){return shell(st,`<div class="paper c tape"><span class="stampw" style="transform:rotate(-8deg);left:12px;right:auto">Klopt</span><div class="lbl" style="margin-top:8px">Wat we nu weten</div><h2>${esc(st.after||'')}</h2></div>${monitor(st.key)}<div class="err" id="err"></div>`,`<button class="btn" id="next">Verder</button>`,{title:'Stop '+st.n+' · '+st.title});}
 function vWait(st){return shell(st,`<div class="paper c tape"><div class="lbl">Corona</div><h1>Even pauze</h1><p>${esc(st.waitText||'')}</p></div><div class="chip"><span class="dot"></span>Geen opdracht · het bandje volgt</div>`,'',{title:st.title});}
 function vFinal(st){const t=S.team;
   if(t.phase==='travel')return shell(st,`<div class="paper c tape"><div class="lbl">De laatste plek</div><h2>${esc(st.hint)}</h2></div><div class="chip" id="dist"><span class="dot"></span>Locatie zoeken</div><div class="err" id="err"></div>`,`<button class="btn" id="arrive">We zijn op de locatie</button>`,{title:'De laatste stop'});
-  if(t.phase==='solved'){player=new Player(st.audio,'Aflevering 7 · Het slot');
-    return shell(st,`${player.html()}<div class="sp"></div><div class="paper c tape"><span class="stampw">Gesloten</span><div class="lbl" style="margin-top:8px">Dossier 98-1103</div><h2>Jullie zijn er. Dit is het einde van de route.</h2></div><div class="rank"><div class="r"><span>Onze tijd</span><b>${esc(t.duration||'')}</b></div>${(S.ranking||[]).map((r,i)=>`<div class="r"><span>${i+1}. ${esc(r.name)}</span><b>${esc(r.duration)}</b></div>`).join('')}</div>`,'',{title:'Zaak gesloten'});}
+  if(t.phase==='solved'){player=new Player(st.audio,'Aflevering 7 · Het slot',()=>{const m=document.getElementById('mon');if(m&&m.reveal)m.reveal();});
+    return shell(st,`${player.html()}${monitor('final',true)}<div class="sp"></div><div class="paper c tape"><span class="stampw">Gesloten</span><div class="lbl" style="margin-top:8px">Dossier 98-1103</div><h2>Jullie zijn er. Dit is het einde van de route.</h2></div><div class="rank"><div class="r"><span>Onze tijd</span><b>${esc(t.duration||'')}</b></div>${(S.ranking||[]).map((r,i)=>`<div class="r"><span>${i+1}. ${esc(r.name)}</span><b>${esc(r.duration)}</b></div>`).join('')}</div>`,'',{title:'Zaak gesloten'});}
   return shell(st,`<div class="paper c tape"><div class="lbl">Café JoJo</div><h2>Even geduld</h2></div>`,'',{title:'Café JoJo'});}
 
-function bind(st){if(player)player.bind(true);
+function bind(st){if(player)player.bind(true);bindMonitor();
   const E=id=>document.getElementById(id);const err=m=>{const e=E('err');if(e)e.innerHTML=m;};
   if(E('next'))E('next').onclick=async()=>{try{S=await api({action:'next',code});render();}catch(e){err(esc(e.message));}};
   if(E('arrive'))E('arrive').onclick=async()=>{const b=E('arrive');b.disabled=true;err('Locatie ophalen');try{const p=await getPos();lastPos=p;const r=await api({action:'arrive',code,lat:p.lat,lng:p.lng,acc:p.acc});if(r.ok){S=r.state;render();}else{err(esc(r.message)+'<br><a id="help">Klopt dit niet? Vraag Jens</a>');b.disabled=false;hookHelp();}}catch(e){err(esc(e.message)+'<br><a id="help">Lukt het niet? Vraag Jens</a>');b.disabled=false;hookHelp();}};
@@ -227,6 +235,15 @@ function bind(st){if(player)player.bind(true);
   if(E('dist')){watch();renderDist(E('dist'));}
 }
 function renderDist(el){const st=S.steps[S.team.step_index],stop=st&&S.config.stops[st.stop];if(!stop||!lastPos){el.innerHTML='<span class="dot"></span>Locatie zoeken';return;}const m=Math.round(hav(lastPos,stop));el.innerHTML=m<=S.config.radius?'<span class="dot"></span><b>Je bent op de plek</b>':`<span class="dot"></span>Nog <b>${m} m</b>`;}
+
+
+/* camera footage */
+const VIDEO={C:['/video/cam1-kelder.mp4','Why Not · kelder 1','03-11-1998'],E:['/video/cam2-fiets.mp4','Park · hek noord','03-11-1998'],final:['/video/cam3-jojo.mp4','Cam 02','vannacht']};
+function monitor(key,hidden){const v=VIDEO[key];if(!v)return '';return `<div class="monitor${hidden?' hidden':''}" id="mon"><video id="vid" src="${v[0]}" playsinline preload="auto"></video><div class="scan"></div><div class="tap" id="vtap">Bekijk de beelden</div><div class="mlabel"><span><i>●</i> rec · ${esc(v[1])}</span><span>${esc(v[2])}</span></div></div>`;}
+function bindMonitor(){const m=document.getElementById('mon'),v=document.getElementById('vid'),t=document.getElementById('vtap');if(!m||!v)return;
+  const play=()=>{AUD.pause();m.classList.add('playing');v.play().catch(()=>{m.classList.remove('playing');});};
+  t.onclick=play;v.onclick=()=>{if(v.paused)play();else v.pause();};v.onended=()=>{m.classList.remove('playing');t.textContent='Nog een keer';};
+  m.reveal=()=>{m.classList.remove('hidden');m.scrollIntoView({behavior:'smooth',block:'center'});};}
 
 /* the call */
 function scheduleCall(st){if(!st.call||!st.call.audio||!st.call.audio.length)return;if(S.team.phase!=='travel')return;const k='call_'+code+'_'+st.key;try{if(localStorage.getItem(k))return;}catch(e){}
