@@ -238,9 +238,9 @@ function renderIntro(msg){
 function vBrief(st){const t=S.team;player=new Player(st.audio,'Teambriefing');const rel=S.config.released.start||(t.code||'').startsWith('TEST');
   return shell(st,`${st.photo?`<div class="polaroid"><img src="${esc(st.photo)}" alt=""></div>`:''}<div class="paper c tape l" style="padding-top:26px"><div class="lbl">Jullie verdachte</div><h1>${esc(t.suspect)}</h1></div><div class="sp"></div>${player.html()}<div class="pintro"><b style="color:#fff">Eerste stop:</b> ${esc(st.nextHint||'')}</div><div class="err" id="err"></div>`,
    `<button class="btn ${rel?'':'quiet'}" id="next">${rel?'We gaan op pad':'Wachten op de start'}</button>`,{title:'Briefing'});}
-function vTravel(st){const ra=st.routeAudio&&st.routeAudio.length;if(ra)player=new Player(st.routeAudio,'Waar moet je heen');
-  return shell(st,`${ra?'<div class="miniwrap">'+player.html()+'</div><div class="sp"></div>':''}<div class="paper c r tape"><div class="lbl">Waar het spoor heen leidt</div><h2>${esc(st.hint)}</h2></div><div class="chip" id="dist"><span class="dot"></span>Locatie zoeken</div><div class="err" id="err"></div>`,
-   `<button class="btn" id="arrive">We zijn op de locatie</button>`,{title:'Spoor '+(st.n||'')+' van 5'});}
+function vTravel(st){const ra=st.routeAudio&&st.routeAudio.length;const fin=st.key==='final';if(ra)player=new Player(st.routeAudio,fin?'Aflevering 7 · Het slot':'Waar moet je heen');
+  return shell(st,`${ra?(fin?player.html():'<div class="miniwrap">'+player.html()+'</div>')+'<div class="sp"></div>':''}<div class="paper c r tape"><div class="lbl">${fin?'Waar het eindigt':'Waar het spoor heen leidt'}</div><h2>${esc(st.hint)}</h2></div><div class="chip" id="dist"><span class="dot"></span>Locatie zoeken</div><div class="err" id="err"></div>`,
+   `<button class="btn" id="arrive">We zijn op de locatie</button>`,{title:fin?'Het laatste spoor':'Spoor '+(st.n||'')+' van 5'});}
 function vStop(st){const hasIntro=st.audioIntro&&st.audioIntro.length;const ans=(st.audioAns&&st.audioAns.length)?st.audioAns:st.audio;
   if(!st.question){player=new Player((hasIntro?st.audioIntro:[]).concat(ans||[]),st.audioLabel||'Fragment',()=>{const b=document.getElementById('done');if(b){b.classList.remove('quiet');b.textContent='Verder';}const m=document.getElementById('mon');if(m&&m.reveal)m.reveal();});
     return shell(st,`${player.html()}<div class="pintro">${esc(st.intro||'')}</div>${monitor(st.key,true)}<div class="sp"></div><div class="paper c tape"><div class="lbl">De laatste opname van Marloes</div><h2 style="font-size:22px">Luister. Daarna weten jullie waar de laatste twee sporen heen leiden.</h2></div><div class="err" id="err"></div>`,`<button class="btn quiet" id="done">Eerst luisteren</button>`,{title:'Stop '+st.n+' · '+st.title});}
@@ -261,10 +261,9 @@ function stage(k){const st=S.steps[S.team.step_index];stageNow=k;['intro','q','a
 function vSolved(st){return shell(st,`<div class="paper c tape"><span class="stampw" style="transform:rotate(-8deg);left:12px;right:auto">Klopt</span><div class="lbl" style="margin-top:8px">Wat we nu weten</div><h2>${esc(st.after||'')}</h2></div>${monitor(st.key)}<div class="err" id="err"></div>`,`<button class="btn" id="next">Verder</button>`,{title:'Stop '+st.n+' · '+st.title});}
 function vWait(st){return shell(st,`<div class="paper c tape"><div class="lbl">Tussenstop</div><h1>Hij luistert ook</h1><p>${esc(st.waitText||'')}</p></div><div class="chip"><span class="dot"></span>Geen opdracht. Het bandje volgt.</div>`,'',{title:st.title});}
 function vFinal(st){const t=S.team;
-  if(t.phase==='travel')return shell(st,`<div class="paper c tape"><div class="lbl">Waar het eindigt</div><h2>${esc(st.hint)}</h2></div><div class="chip" id="dist"><span class="dot"></span>Locatie zoeken</div><div class="err" id="err"></div>`,`<button class="btn" id="arrive">We zijn op de locatie</button>`,{title:'Het laatste spoor'});
-  if(t.phase==='solved'){const slot=S.config.released.slot;player=new Player(st.audio,'Aflevering 7 · Het slot',()=>{const m=document.getElementById('mon');if(m&&m.reveal)m.reveal();});
-    if(!slot)return shell(st,`<div class="paper c tape"><div class="lbl">Jullie zijn er</div><h2>Ga zitten. Niet aan de bar.</h2><p>Jullie tijd staat stil. Luister naar de laatste aflevering, dan wachten we op de anderen. Dit hoort iedereen tegelijk af te maken.</p></div><div class="sp"></div>${player.html()}${monitor('final',true)}<div class="err" id="err"></div>`,'',{title:'Het laatste spoor'});
-    return shell(st,`<div class="paper c tape"><span class="stampw">Gesloten</span><div class="lbl" style="margin-top:8px">Dossier 98-1103</div><h2>Antonius Smits. De gang tussen de kelders. En een nichtje dat zweeg.</h2></div><div class="rank"><div class="r"><span>Onze tijd</span><b>${esc(t.duration||'')}</b></div>${(S.ranking||[]).map((r,i)=>`<div class="r"><span>${i+1}. ${esc(r.name)}</span><b>${esc(r.duration)}</b></div>`).join('')}</div><div class="sp"></div>${player.html()}${monitor('final')}`,'',{title:'Zaak gesloten'});}
+  if(t.phase==='travel')return vTravel(st);
+  if(t.phase==='solved'){player=new Player(st.audio,'Het slot',()=>{const m=document.getElementById('mon');if(m&&m.reveal)m.reveal();setTimeout(()=>{const r=document.getElementById('rank');if(r)r.classList.remove('hidden');},1500);});
+    return shell(st,`${player.html()}${monitor('final',true)}<div class="sp"></div><div class="paper c tape"><span class="stampw">Gesloten</span><div class="lbl" style="margin-top:8px">Dossier 98-1103</div><h2>Antonius Smits. De gang tussen de kelders. En een nichtje dat zweeg.</h2><p>Jullie tijd staat stil. Ga naar binnen. Niet aan de bar zitten.</p></div><div class="rank hidden" id="rank"><div class="r"><span>Onze tijd</span><b>${esc(t.duration||'')}</b></div>${(S.ranking||[]).map((r,i)=>`<div class="r"><span>${i+1}. ${esc(r.name)}</span><b>${esc(r.duration)}</b></div>`).join('')}</div>`,'',{title:'Zaak gesloten'});}
   return shell(st,`<div class="paper c tape"><div class="lbl">Café JoJo</div><h2>Even geduld</h2></div>`,'',{title:'Café JoJo'});}
 
 function bind(st){if(player)player.bind(true);bindMonitor();
@@ -310,8 +309,7 @@ function scheduleEvents(st){evTimers.forEach(clearTimeout);evTimers=[];if(!S||S.
   if(t.phase==='wait')at(80,'msg2',()=>showMsg('Ik zit twee tafels achter jullie.'));
   if(t.phase==='travel'&&(st.n===4||st.n===5))at(45,'clock',clockGlitch);
   if(t.phase==='travel'&&st.key==='final')at(160,'msg3',()=>showMsg('Zelfde kruk. Kom maar.',{hold:9}));
-  if(t.phase==='solved'&&st.key==='final'&&!S.config.released.slot)at(30,'kruk',()=>showMsg('Jullie zitten op mijn kruk.',{hold:8}));
-  if(t.phase==='solved'&&st.key==='final'&&S.config.released.slot)at(0.3,'slot',()=>{flashCam(2600);setTimeout(()=>showMsg('Ik zit twee krukken van jullie vandaan.',{hold:10}),3200);});
+  if(t.phase==='solved'&&st.key==='final')at(25,'kruk',()=>showMsg('Ik zit twee krukken van jullie vandaan.',{hold:10}));
   if(t.phase==='solved'&&st.whisperAudio&&st.whisperAudio.length)at(1.2,'wh_'+st.key,()=>{try{AUD.pause();AUD.onended=null;AUD.ontimeupdate=null;AUD.loop=false;AUD.src=st.whisperAudio[0];AUD.play().catch(()=>{});}catch(e){}});
 }
 once.peek=k=>{try{return !localStorage.getItem('ev_'+code+'_'+k);}catch(e){return true;}};
@@ -324,7 +322,7 @@ setInterval(()=>{if(!S||S.admin||!S.team||!unlocked)return;if(!AUD.paused||callL
 
 /* the call */
 function scheduleCall(st){if(!st.call||!st.call.audio||!st.call.audio.length)return;if(S.team.phase!=='travel')return;const k='call_'+code+'_'+st.key;try{if(localStorage.getItem(k))return;}catch(e){}
-  callTimer=setTimeout(()=>{try{localStorage.setItem(k,'1')}catch(e){}showCall(st.call,()=>afterCall(st.key));},(st.call.delay||60)*1000);}
+  callTimer=setTimeout(()=>{try{localStorage.setItem(k,'1')}catch(e){}showCall(st.call,()=>afterCall(st.key));},(st.key==='final'?115:(st.call.delay||60))*1000);}
 function showCall(c,after){AUD.pause();
   callLayer.innerHTML=`<div class="call"><div><div class="av">?</div><div class="name">Onbekend nummer</div><div class="st" id="cst">Inkomende oproep</div></div><div class="acts"><button class="cbtn no" id="cno">${PHONE}</button><button class="cbtn ok" id="cok">${PHONE}</button></div></div>`;
   try{if(navigator.vibrate)navigator.vibrate([600,400,600,400,600,400,600,400,600]);}catch(e){}
@@ -349,7 +347,7 @@ function renderAdmin(){const stops=S.config.stops,rel=S.config.released||{};play
   const rows=(S.teams||[]).map(t=>{const st=S.steps_for(t)[t.step_index];const stop=st&&stops[st.stop];let d='';if(t.last_lat&&stop)d=Math.round(hav({lat:t.last_lat,lng:t.last_lng},stop))+' m van '+st.title+', ';const seen=t.last_seen?Math.round((Date.now()-new Date(t.last_seen).getTime())/60000)+' min geleden':'nog niet gezien';
     return `<div class="row"><div class="l"><b>${esc(t.name)}</b>${t.help?'<span class="badge help">hulp</span>':''}${t.finished_at?'<span class="badge ok">'+esc(t.duration)+'</span>':''}<span>${st?esc(st.title):'klaar'}, ${esc(t.phase)}</span><span>${d}${seen}</span><span>${esc(t.code)}</span></div><div><button class="mini red" data-op="skip" data-code="${esc(t.code)}">Zet door</button><button class="mini" data-op="back" data-code="${esc(t.code)}">Terug</button><button class="mini" data-op="clearhelp" data-code="${esc(t.code)}">Hulp ok</button><button class="mini" data-op="reset" data-code="${esc(t.code)}">Reset</button></div></div>`;}).join('');
   app.innerHTML=`<header><div class="hl"><span class="team">Spelleider</span><span class="clock" id="clock">${leftTxt()}</span></div></header><main style="align-items:center">${player.html()}<div class="sp"></div><div style="width:100%">
-   <div class="card"><h3>Vrijgeven</h3><button class="mini ${rel.start?'':'red'}" data-op="release" data-key="start">${rel.start?'Start is vrij':'Geef de start vrij'}</button><button class="mini ${rel.corona?'':'red'}" data-op="release" data-key="corona">${rel.corona?'Corona is vrij':'Geef Corona vrij'}</button><button class="mini ${rel.slot?'':'red'}" data-op="release" data-key="slot">${rel.slot?'Slot is vrij':'Geef het slot vrij (JoJo)'}</button></div>
+   <div class="card"><h3>Vrijgeven</h3><button class="mini ${rel.start?'':'red'}" data-op="release" data-key="start">${rel.start?'Start is vrij':'Geef de start vrij'}</button><button class="mini ${rel.corona?'':'red'}" data-op="release" data-key="corona">${rel.corona?'Corona is vrij':'Geef Corona vrij'}</button></div>
    <div class="card"><h3>Teams</h3>${rows}</div>
    <div class="card"><h3>Stops ijken</h3><div style="font-size:12px;color:var(--ink2);margin:0 0 10px">Sta op de plek en druk op de knop. Straal ${S.config.radius} m.</div>${Object.keys(stops).map(k=>`<button class="mini" data-op="calib" data-stop="${k}">${esc(stops[k].name)}</button>`).join('')}<div class="err" id="err"></div></div></div></main><footer><button class="btn quiet" id="logout">Uitloggen</button></footer>`;
   document.body.classList.add('adm');player.bind();
