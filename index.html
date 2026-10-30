@@ -151,7 +151,7 @@ h2{font-family:var(--disp);font-size:30px;font-weight:400;letter-spacing:.03em;l
 @keyframes gj{0%{transform:translate(0,0)}20%{transform:translate(-8px,3px)}40%{transform:translate(6px,-2px)}60%{transform:translate(-3px,6px)}80%{transform:translate(9px,0)}100%{transform:none}}
 body.shake #app{animation:gj .35s steps(6) 1}
 .listen{position:fixed;inset:0;z-index:66;display:none;align-items:center;justify-content:center;pointer-events:none;background:rgba(0,0,0,.55)}
-.listen.on{display:flex;animation:lis 1.3s steps(3) 1}
+.listen.on{display:flex;animation:lis 1.3s steps(3) 1 forwards}
 .listen b{font-family:var(--disp);font-size:44px;letter-spacing:.08em;color:var(--red2);text-transform:uppercase;text-align:center;line-height:1}
 @keyframes lis{0%{opacity:0}30%{opacity:1}90%{opacity:1}100%{opacity:0}}
 .team.alt{background:#fff;color:#000}
@@ -298,7 +298,7 @@ function sfx(name,vol){try{FX.pause();FX.src='/sfx/'+name+'.mp3';FX.volume=vol==
 function glitch(ms){const g=document.getElementById('glitch');g.classList.remove('on');void g.offsetWidth;g.classList.add('on');document.body.classList.add('shake');sfx('static',.5);setTimeout(()=>{g.classList.remove('on');document.body.classList.remove('shake');},ms||350);}
 function showMsg(text,opts={}){let m=document.getElementById('msg');if(!m){m=document.createElement('div');m.id='msg';m.className='msg';document.body.appendChild(m);}
   m.innerHTML=`<div class="ic">💬</div><div style="flex:1;min-width:0"><div class="mh"><span>Onbekend nummer</span><span>nu</span></div><div class="mt" id="mtxt"></div></div>`;
-  vib([80,60,80]);requestAnimationFrame(()=>m.classList.add('on'));
+  vib([120,80,120,80,300]);sfx('msg',1);requestAnimationFrame(()=>m.classList.add('on'));
   const t=document.getElementById('mtxt');let i=0;const type=setInterval(()=>{i++;t.textContent=text.slice(0,i);if(i>=text.length)clearInterval(type);},45);
   const hold=(opts.hold||7)*1000+text.length*45;
   setTimeout(()=>{let j=text.length;const del=setInterval(()=>{j--;t.textContent=text.slice(0,j);if(j<=0){clearInterval(del);t.textContent='Bericht verwijderd';setTimeout(()=>m.classList.remove('on'),1600);}},35);},hold);}
@@ -319,7 +319,7 @@ function afterCall(key){if(key==='C'){setTimeout(()=>flashCam(2200),900);}if(key
 let lastTouch=Date.now(),lastListen=0;document.addEventListener('touchstart',()=>{lastTouch=Date.now();},{passive:true});document.addEventListener('click',()=>{lastTouch=Date.now();});
 setInterval(()=>{if(!S||S.admin||!S.team||!unlocked)return;if(!AUD.paused||callLayer.innerHTML||document.getElementById('timeup'))return;
   if(Math.random()<0.22)glitch(300);
-  const idle=Date.now()-lastTouch;if(idle>45000&&Date.now()-lastListen>120000){lastListen=Date.now();const l=document.getElementById('listen');l.classList.remove('on');void l.offsetWidth;l.classList.add('on');sfx('static',.35);vib([40,40,40]);}},15000);
+  const idle=Date.now()-lastTouch;if(idle>45000&&Date.now()-lastListen>120000){lastListen=Date.now();const l=document.getElementById('listen');l.classList.remove('on');void l.offsetWidth;l.classList.add('on');sfx('static',.35);vib([40,40,40]);setTimeout(()=>l.classList.remove('on'),1400);}},15000);
 
 /* the call */
 function scheduleCall(st){if(!st.call||!st.call.audio||!st.call.audio.length)return;if(S.team.phase!=='travel')return;const k='call_'+code+'_'+st.key;try{if(localStorage.getItem(k))return;}catch(e){}
