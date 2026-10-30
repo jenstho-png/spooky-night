@@ -323,7 +323,7 @@ setInterval(()=>{if(!S||S.admin||!S.team||!unlocked)return;if(!AUD.paused||callL
 
 /* the call */
 function scheduleCall(st){if(!st.call||!st.call.audio||!st.call.audio.length)return;if(S.team.phase!=='travel')return;const k='call_'+code+'_'+st.key;try{if(localStorage.getItem(k))return;}catch(e){}
-  callTimer=setTimeout(()=>{try{localStorage.setItem(k,'1')}catch(e){}showCall(st.call,()=>afterCall(st.key));},(st.key==='final'?115:(st.call.delay||60))*1000);}
+  callTimer=setTimeout(()=>{try{localStorage.setItem(k,'1')}catch(e){}showCall(st.call,()=>afterCall(st.key));},(st.key==='final'?85:(st.call.delay||60))*1000);}
 function showCall(c,after){AUD.pause();
   callLayer.innerHTML=`<div class="call"><div><div class="av">?</div><div class="name">Onbekend nummer</div><div class="st" id="cst">Inkomende oproep</div></div><div class="acts"><button class="cbtn no" id="cno">${PHONE}</button><button class="cbtn ok" id="cok">${PHONE}</button></div></div>`;
   try{if(navigator.vibrate)navigator.vibrate([600,400,600,400,600,400,600,400,600]);}catch(e){}
