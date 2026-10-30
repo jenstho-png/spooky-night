@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="nl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#000"><title>·</title>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;box-sizing:border-box}html,body{height:100%;background:#000;overflow:hidden;-webkit-user-select:none;user-select:none}
+#s{position:fixed;inset:0;background:#000;display:flex;align-items:center;justify-content:center;font-family:'Courier Prime',monospace;color:#fff}
+.tap{font-size:14px;letter-spacing:.3em;color:#555;text-transform:uppercase}
+.layer{position:fixed;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:24px}
+.layer.on{display:flex}
+#tv{background:#000}
+#tv .frame{width:100%;aspect-ratio:4/3;background:#0b0b0b;position:relative;overflow:hidden;filter:contrast(1.25) saturate(.6);box-shadow:0 0 120px rgba(255,255,255,.08) inset}
+#tv .frame img{position:absolute;left:50%;top:0;height:100%;transform:translateX(-50%);filter:grayscale(.5) sepia(.3) contrast(1.2) brightness(.8)}
+#tv .noise{position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.9'/%3E%3C/svg%3E");opacity:.35;mix-blend-mode:screen;animation:nz .12s steps(2) infinite}
+@keyframes nz{to{transform:translate(-6px,4px)}}
+#tv .scan{position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,.45) 0 2px,transparent 2px 4px)}
+#tv .lt{position:absolute;left:0;right:0;bottom:0;background:linear-gradient(90deg,#8a0f1a,#3b0a0e);color:#fff;font:700 15px/1.2 'Courier Prime',monospace;letter-spacing:.06em;padding:8px 12px;text-transform:uppercase}
+#tv .lt small{display:block;font-weight:400;font-size:11px;opacity:.85;letter-spacing:.14em}
+#tv .clock{position:absolute;right:10px;top:8px;font:700 13px 'Courier Prime',monospace;color:#fff;letter-spacing:.1em;text-shadow:0 0 4px #000}
+#tv .room{position:absolute;inset:0;box-shadow:inset 0 0 90px 30px #000;pointer-events:none}
+.static{position:fixed;inset:0;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='1' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");opacity:0;pointer-events:none;animation:nz .08s steps(2) infinite}
+.static.on{opacity:.9}
+#title .t{font-family:Anton,sans-serif;font-size:70px;line-height:.9;letter-spacing:.02em;text-transform:uppercase;color:#fff}
+#title .t i{font-style:normal;color:#e5162f}
+#title .sub{font:13px 'Courier Prime',monospace;letter-spacing:.2em;text-transform:uppercase;color:#8a8a8a;margin-top:18px}
+#cam{background:#000}
+#cam img{width:100%;filter:contrast(1.15)}
+#cam .ts{position:absolute;left:14px;top:14px;font:700 14px 'Courier Prime',monospace;color:#fff;letter-spacing:.06em;text-shadow:0 0 4px #000}
+#end .d{font:700 14px 'Courier Prime',monospace;letter-spacing:.24em;color:#8a8a8a;text-transform:uppercase}
+#end .b{font-family:Anton,sans-serif;font-size:54px;line-height:1;color:#fff;margin:14px 0 6px;text-transform:uppercase}
+#end .r{font-family:Anton,sans-serif;font-size:30px;color:#e5162f;text-transform:uppercase;letter-spacing:.06em;margin-top:28px}
+.fade{animation:fi .8s ease both}@keyframes fi{from{opacity:0}to{opacity:1}}
+.shake{animation:sh .35s steps(6) 1}@keyframes sh{20%{transform:translate(-8px,3px)}40%{transform:translate(6px,-2px)}60%{transform:translate(-3px,6px)}80%{transform:translate(9px,0)}}
+#tv .frame.crt{animation:crt .2s linear infinite}@keyframes crt{0%{filter:contrast(1.25) saturate(.6) brightness(1)}50%{filter:contrast(1.25) saturate(.6) brightness(.93)}100%{filter:contrast(1.25) saturate(.6) brightness(1)}}
+</style></head><body>
+<div id="s"><div class="tap">tik om te starten</div></div>
+<div id="tv" class="layer"><div class="frame crt"><img src="https://lgroqjniibwgnvddtrbb.supabase.co/storage/v1/object/public/audio/marloes.jpg" alt=""><div class="scan"></div><div class="noise"></div><div class="clock">JOURNAAL · 20:00</div><div class="lt">Nijmegen · vrouw (23) vermist na personeelsfeest<small>Jas gevonden in kelder café Van Welderenstraat</small></div><div class="room"></div></div></div>
+<div id="title" class="layer"><div class="t">Sluitings<i>tijd</i></div><div class="sub">Een podcast die nooit is uitgezonden</div></div>
+<div id="cam" class="layer"><img src="/video/cam1-frame.jpg" alt=""><div class="ts">WHY NOT KELDER 1 · 03-11-1998 02:51:18</div></div>
+<div id="end" class="layer"><div class="d">Dossier 98-1103</div><div class="b">Maandag<br>19:00</div><div class="d">Speeltuin Kronenburgerpark</div><div class="r">Hij luistert ook.</div></div>
+<div class="static" id="st"></div>
+<audio id="a" preload="auto"></audio>
+<script>
+const A=document.getElementById('a'),B='https://lgroqjniibwgnvddtrbb.supabase.co/storage/v1/object/public/audio/';
+const L=id=>document.getElementById(id);const show=id=>{document.querySelectorAll('.layer').forEach(l=>l.classList.remove('on','fade'));if(id){L(id).classList.add('on','fade');}};
+const st=ms=>{L('st').classList.add('on');document.body.classList.add('shake');setTimeout(()=>{L('st').classList.remove('on');document.body.classList.remove('shake');},ms);};
+/* each track: file, layer, static burst before it (ms), pause before (ms) */
+const PL=[['journaal-fx.mp3','tv',0,0],['sting.mp3','title',900,400],['teaser-bram.mp3','cam',300,300],['slot-tonnie.mp3','end',300,600]];
+let i=-1;
+function next(){i++;if(i>=PL.length){setTimeout(()=>show(null),3500);return;}const [f,layer,burst,gap]=PL[i];
+  const go=()=>{if(burst){show(null);st(burst);}setTimeout(()=>{show(layer);A.src=B+f;A.play().catch(()=>{});},burst);};
+  setTimeout(go,gap);}
+A.onended=next;
+let tvTimer=null;A.ontimeupdate=()=>{if(i===0&&A.currentTime>25&&!tvTimer){tvTimer=1;st(220);}};
+L('s').onclick=()=>{L('s').style.display='none';next();};
+</script></body></html>
