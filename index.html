@@ -116,6 +116,24 @@ h2{font-family:var(--disp);font-size:30px;font-weight:400;letter-spacing:.03em;l
 @keyframes blink{to{opacity:0}}
 .monitor .tap{position:absolute;left:6px;right:6px;top:6px;aspect-ratio:16/9;display:flex;align-items:center;justify-content:center;font-family:Anton,sans-serif;font-size:18px;letter-spacing:.08em;color:#fff;background:rgba(0,0,0,.45);text-transform:uppercase}
 .monitor.playing .tap{display:none}
+
+/* start screen */
+.cover{position:absolute;inset:0;background:#000 center/cover no-repeat;filter:grayscale(.85) contrast(1.15) brightness(.5);animation:kb 28s ease-in-out infinite alternate;z-index:0}
+@keyframes kb{from{transform:scale(1.02)}to{transform:scale(1.14)}}
+.cover:after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 40%,rgba(0,0,0,0) 0%,rgba(0,0,0,.55) 55%,#000 100%)}
+.flick{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;animation:flick 9s linear infinite;z-index:1;mix-blend-mode:overlay}
+@keyframes flick{0%,91%,93.5%,94.5%,100%{opacity:0}92%{opacity:.08}94%{opacity:.14}}
+.startmain{position:relative;z-index:2;justify-content:space-between;padding-top:calc(var(--sat) + 26px);padding-bottom:10px}
+.vermist{background:var(--paper);color:var(--inkp);width:min(82vw,290px);padding:16px 16px 14px;transform:rotate(-2.2deg);box-shadow:0 20px 50px rgba(0,0,0,.8);position:relative;text-align:center}
+.vermist:before{content:'';position:absolute;left:50%;top:-11px;width:92px;height:24px;margin-left:-46px;background:rgba(255,255,255,.42);transform:rotate(-3deg);box-shadow:0 1px 2px rgba(0,0,0,.3)}
+.vermist .vt{font-family:var(--disp);font-size:44px;line-height:1;letter-spacing:.08em;color:var(--red);text-transform:uppercase}
+.vermist img{display:block;width:100%;aspect-ratio:1;object-fit:cover;margin:12px 0 10px;filter:sepia(.25) contrast(1.05);border:1px solid rgba(0,0,0,.15)}
+.vermist .vn{font-family:var(--disp);font-size:22px;letter-spacing:.04em;text-transform:uppercase;line-height:1}
+.vermist .vd{font-family:var(--mono);font-size:11px;line-height:1.6;margin-top:6px;color:#2c2924}
+.vermist .vs{position:absolute;right:-10px;top:52%;transform:rotate(-14deg);border:3px solid var(--red2);color:var(--red2);font-family:var(--mono);font-weight:700;font-size:13px;letter-spacing:.2em;padding:5px 9px 4px;text-transform:uppercase;opacity:.9;mix-blend-mode:multiply;background:rgba(255,255,255,.3)}
+.vermist .vh{font-family:var(--hand);font-size:22px;color:#1b2c6e;position:absolute;left:12px;bottom:-30px;transform:rotate(-5deg);text-shadow:0 1px 0 rgba(255,255,255,.2)}
+.titlebig{font-family:var(--disp);font-size:52px;line-height:.9;letter-spacing:.02em;color:#fff;text-transform:uppercase;text-shadow:0 4px 30px rgba(0,0,0,.9)}
+.titlebig i{color:var(--red2);font-style:normal}
 </style>
 </head>
 <body>
@@ -123,7 +141,7 @@ h2{font-family:var(--disp);font-size:30px;font-weight:400;letter-spacing:.03em;l
 <div id="callLayer"></div>
 
 <script>
-const API='https://lgroqjniibwgnvddtrbb.supabase.co/functions/v1/game/api',LS='sluitingstijd_code';
+const IMG='https://lgroqjniibwgnvddtrbb.supabase.co/storage/v1/object/public/audio/';const API='https://lgroqjniibwgnvddtrbb.supabase.co/functions/v1/game/api',LS='sluitingstijd_code';
 let S=null,code=null,pollTimer=null,geoWatch=null,lastPos=null,lastPing=0,player=null,callTimer=null,screen='start';
 const app=document.getElementById('app'),callLayer=document.getElementById('callLayer');
 const PLAY='<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>',PAUSE='<svg viewBox="0 0 24 24"><path d="M6 5h4v14H6zm8 0h4v14h-4z"/></svg>';
@@ -186,7 +204,7 @@ function render(){killPlayer();clearTimeout(callTimer);document.body.classList.r
 }
 /* intro: start, location, code */
 function renderIntro(msg){
-  if(screen==='start'){app.innerHTML=`<header></header><main class="fade"><div class="sub">Dossier 98-1103 · Nijmegen</div><div class="sp"></div><div class="title">Sluitings<i>tijd</i></div><div class="rule"></div><div class="sub">Een podcast die nooit<br>is uitgezonden</div></main><footer><button class="btn" id="start">Start</button></footer>`;
+  if(screen==='start'){app.innerHTML=`<div class="cover" style="background-image:url('${IMG}kelder.jpg')"></div><div class="flick"></div><main class="startmain fade"><div><div class="sub">Dossier 98-1103 · Nijmegen</div><div class="titlebig" style="margin-top:8px">Sluitings<i>tijd</i></div><div class="sub" style="margin-top:10px">Een podcast die nooit is uitgezonden</div></div><div class="vermist"><div class="vt">Vermist</div><img src="${IMG}marloes.jpg" alt=""><div class="vn">Marloes Hendriks</div><div class="vd">23 jaar · barmedewerkster<br>Laatst gezien 3 november 1998, 02:50<br>Why Not, Van Welderenstraat</div><div class="vs">Nooit gevonden</div><div class="vh">28 jaar geleden. Vannacht.</div></div><div class="sub" style="opacity:.7">Spooky Night · 2 november 2026</div></main><footer style="position:relative;z-index:2"><button class="btn" id="start">Start</button></footer>`;
     document.getElementById('start').onclick=()=>{unlock();screen='geo';renderIntro();};return;}
   if(screen==='geo'){app.innerHTML=`<header></header><main class="fade"><div class="paper c tape"><div class="lbl">Voordat we beginnen</div><h2>We moeten weten waar je bent</h2><p>De app kijkt of je op de juiste plek staat. Zonder locatie kom je niet verder. Druk op de knop en kies <b>Toestaan</b>.</p><div class="err" id="err">${esc(msg||'')}</div></div></main><footer><button class="btn" id="geo">Locatie aanzetten</button></footer>`;
     document.getElementById('geo').onclick=async()=>{const b=document.getElementById('geo');b.disabled=true;b.textContent='Even wachten';try{lastPos=await getPos();screen='code';renderIntro();}catch(e){renderIntro(e.message);}};return;}
