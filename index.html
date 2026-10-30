@@ -135,7 +135,7 @@ function unlock(){if(unlocked)return;unlocked=true;try{AUD.src=SILENT;AUD.play()
 document.addEventListener('touchend',unlock,{once:true,passive:true});document.addEventListener('click',unlock,{once:true});
 function Player(urls,title,onEnd){this.urls=urls||[];this.i=0;this.title=title;this.onEnd=onEnd;this.ended=false;}
 Player.prototype.html=function(){return `<div class="disc" id="disc"><svg class="ring" viewBox="0 0 200 200"><circle cx="100" cy="100" r="96" stroke="#232323" stroke-width="3" fill="none"/><circle id="ring" cx="100" cy="100" r="96" stroke="#e5162f" stroke-width="3" fill="none" stroke-dasharray="603" stroke-dashoffset="603" stroke-linecap="round"/></svg><div class="pb" id="pb">${PLAY}</div></div><div class="ptitle">${esc(this.title)}</div><div class="ptime" id="ptime">${this.urls.length?'0:00':'Fragment volgt'}</div>`;};
-Player.prototype.bind=function(autoplay){const me=this;const pb=document.getElementById('pb'),disc=document.getElementById('disc'),ring=document.getElementById('ring'),pt=document.getElementById('ptime');if(!pb||!me.urls.length)return;
+Player.prototype.bind=function(autoplay){const me=this;const ids=me.ids||{pb:'pb',disc:'disc',ring:'ring',pt:'ptime'};const pb=document.getElementById(ids.pb),disc=document.getElementById(ids.disc),ring=document.getElementById(ids.ring),pt=document.getElementById(ids.pt);if(!pb||!me.urls.length)return;
   me.load=i=>{me.i=i;AUD.pause();AUD.loop=false;AUD.src=me.urls[i];AUD.load();
     AUD.onplay=()=>{disc.classList.add('playing');pb.innerHTML=PAUSE};AUD.onpause=()=>{disc.classList.remove('playing');pb.innerHTML=PLAY};
     AUD.ontimeupdate=()=>{if(AUD.duration){const f=AUD.currentTime/AUD.duration;ring.style.strokeDashoffset=603-603*f;pt.textContent=fmt(AUD.currentTime)+' / '+fmt(AUD.duration);}};
@@ -155,7 +155,7 @@ setInterval(()=>{const c=document.getElementById('clock');if(c){c.textContent=le
 /* screens */
 function shell(st,main,foot,opts={}){const t=S.team;const bars=S.steps.map((s,i)=>`<i class="${i<t.step_index?'done':i===t.step_index?'cur':''}"></i>`).join('');
   return `<header><div class="hl"><span class="team">${esc(t.name)}</span><span class="clock" id="clock">${leftTxt()}</span></div><div class="bars">${bars}</div><div class="where">${esc(opts.title||'')}</div></header><main class="fade">${main}</main><footer>${foot||''}</footer>`;}
-function render(){killPlayer();clearTimeout(callTimer);document.body.classList.remove('adm');
+function render(){killPlayer();clearTimeout(callTimer);document.body.classList.remove('adm');stageNow='intro';
   if(!S)return renderIntro();
   if(S.admin)return renderAdmin();
   const t=S.team,st=S.steps[t.step_index];if(!st)return;
@@ -181,15 +181,26 @@ function renderIntro(msg){
   document.getElementById('go').onclick=go;inp.onkeydown=e=>{if(e.key==='Enter')go()};
 }
 function vBrief(st){const t=S.team;player=new Player(st.audio,'Teambriefing');const rel=S.config.released.start;
-  return shell(st,`${st.photo?`<div class="polaroid"><img src="${esc(st.photo)}" alt=""></div>`:''}<div class="paper c tape l" style="padding-top:26px"><div class="lbl">Jullie verdachte</div><h1>${esc(t.suspect)}</h1></div><div class="sp"></div>${player.html()}<div class="err" id="err"></div>`,
+  return shell(st,`${st.photo?`<div class="polaroid"><img src="${esc(st.photo)}" alt=""></div>`:''}<div class="paper c tape l" style="padding-top:26px"><div class="lbl">Jullie verdachte</div><h1>${esc(t.suspect)}</h1></div><div class="sp"></div>${player.html()}<div class="pintro"><b style="color:#fff">Eerste stop:</b> ${esc(st.nextHint||'')}</div><div class="err" id="err"></div>`,
    `<button class="btn ${rel?'':'quiet'}" id="next">${rel?'We gaan op pad':'Wachten op de start'}</button>`,{title:'Briefing'});}
 function vTravel(st){const ra=st.routeAudio&&st.routeAudio.length;if(ra)player=new Player(st.routeAudio,'Waar moet je heen');
   return shell(st,`${ra?player.html()+'<div class="sp"></div>':''}<div class="paper c r tape"><div class="lbl">Volgende plek</div><h2>${esc(st.hint)}</h2></div><div class="chip" id="dist"><span class="dot"></span>Locatie zoeken</div><div class="err" id="err"></div>`,
    `<button class="btn" id="arrive">We zijn op de locatie</button>`,{title:'Onderweg naar stop '+(st.n||'')});}
-function vStop(st){player=new Player(st.audio,st.audioLabel||'Fragment',()=>{showQ(true);});
-  return shell(st,`<div id="pwrap">${player.html()}<div class="pintro">${esc(st.intro||'')}</div></div><div id="q" class="hidden"><div class="paper tape"><span class="stampw">Opdracht ${st.n}</span><div class="lbl">Eerst dit</div><p style="margin-top:0">${esc(st.do||'')}</p><div class="lbl" style="margin-top:14px">Dan</div><p style="margin-top:0;font-weight:700">${esc(st.question)}</p><input id="ans" placeholder="Jullie antwoord" autocapitalize="none" autocomplete="off" spellcheck="false"><div class="err" id="err"></div>${BLOOD}</div></div>`,
-   `<button class="btn dark hidden" id="toggle">Fragment</button><button class="btn" id="check">Naar de opdracht</button>`,{title:'Stop '+st.n+' · '+st.title});}
-function showQ(on){const q=document.getElementById('q'),p=document.getElementById('pwrap'),tg=document.getElementById('toggle'),ck=document.getElementById('check');if(!q)return;q.classList.toggle('hidden',!on);p.classList.toggle('hidden',on);tg.classList.toggle('hidden',!on);ck.textContent=on?'Controleer':'Naar de opdracht';if(on){AUD.pause();}}
+function vStop(st){const hasIntro=st.audioIntro&&st.audioIntro.length;const ans=(st.audioAns&&st.audioAns.length)?st.audioAns:st.audio;
+  player=new Player(hasIntro?st.audioIntro:ans,st.audioLabel||'Fragment',()=>{if(hasIntro)stage('q');else stage('in');});
+  return shell(st,`<div id="s_intro">${player.html()}<div class="pintro">${esc(st.intro||'')}</div></div>
+<div id="s_q" class="hidden"><div class="paper c tape"><span class="stampw">Opdracht ${st.n}</span><div class="lbl">Let op tijdens het fragment</div><h2 style="font-size:24px">${esc(st.question)}</h2>${st.do?`<p><b>Eerst dit:</b> ${esc(st.do)}</p>`:''}</div></div>
+<div id="s_ans" class="hidden"><div class="disc" id="disc2"><svg class="ring" viewBox="0 0 200 200"><circle cx="100" cy="100" r="96" stroke="#232323" stroke-width="3" fill="none"/><circle id="ring2" cx="100" cy="100" r="96" stroke="#e5162f" stroke-width="3" fill="none" stroke-dasharray="603" stroke-dashoffset="603" stroke-linecap="round"/></svg><div class="pb" id="pb2">${PLAY}</div></div><div class="ptitle">${esc(st.audioLabel||'Fragment')}</div><div class="ptime" id="ptime2">0:00</div><div class="pintro">${esc(st.question)}</div></div>
+<div id="s_in" class="hidden"><div class="paper tape"><span class="stampw">Opdracht ${st.n}</span><div class="lbl">Jullie antwoord</div><p style="margin-top:0;font-weight:700">${esc(st.question)}</p><input id="ans" placeholder="Typ hier" autocapitalize="none" autocomplete="off" spellcheck="false"><div class="err" id="err"></div>${BLOOD}</div></div>`,
+   `<button class="btn dark hidden" id="toggle">Fragment</button><button class="btn" id="check">${hasIntro?'Naar de opdracht':'Naar het antwoord'}</button>`,{title:'Stop '+st.n+' · '+st.title});}
+let stageNow='intro';
+function stage(k){const st=S.steps[S.team.step_index];stageNow=k;['intro','q','ans','in'].forEach(x=>{const e=document.getElementById('s_'+x);if(e)e.classList.toggle('hidden',x!==k);});
+  const tg=document.getElementById('toggle'),ck=document.getElementById('check');if(!ck)return;
+  tg.classList.toggle('hidden',k!=='in');
+  if(k==='q'){AUD.pause();ck.textContent='Speel het fragment';}
+  else if(k==='ans'){ck.textContent='Naar het antwoord';const ans=(st.audioAns&&st.audioAns.length)?st.audioAns:st.audio;killPlayer();player=new Player(ans,st.audioLabel||'Fragment',()=>stage('in'));player.ids={pb:'pb2',disc:'disc2',ring:'ring2',pt:'ptime2'};player.bind(true);}
+  else if(k==='in'){AUD.pause();ck.textContent='Controleer';const i=document.getElementById('ans');if(i)setTimeout(()=>i.focus(),50);}
+}
 function vSolved(st){return shell(st,`<div class="paper c tape"><span class="stampw" style="transform:rotate(-8deg);left:12px;right:auto">Klopt</span><div class="lbl" style="margin-top:8px">Wat we nu weten</div><h2>${esc(st.after||'')}</h2></div><div class="err" id="err"></div>`,`<button class="btn" id="next">Verder</button>`,{title:'Stop '+st.n+' · '+st.title});}
 function vWait(st){return shell(st,`<div class="paper c tape"><div class="lbl">Corona</div><h1>Even wachten</h1><p>${esc(st.waitText||'')}</p></div><div class="chip"><span class="dot"></span>Het bandje volgt</div>`,'',{title:st.title});}
 function vFinal(st){const t=S.team;
@@ -203,8 +214,8 @@ function bind(st){if(player)player.bind(true);
   if(E('next'))E('next').onclick=async()=>{try{S=await api({action:'next',code});render();}catch(e){err(esc(e.message));}};
   if(E('arrive'))E('arrive').onclick=async()=>{const b=E('arrive');b.disabled=true;err('Locatie ophalen');try{const p=await getPos();lastPos=p;const r=await api({action:'arrive',code,lat:p.lat,lng:p.lng,acc:p.acc});if(r.ok){S=r.state;render();}else{err(esc(r.message)+'<br><a id="help">Klopt dit niet? Vraag Jens</a>');b.disabled=false;hookHelp();}}catch(e){err(esc(e.message)+'<br><a id="help">Lukt het niet? Vraag Jens</a>');b.disabled=false;hookHelp();}};
   function hookHelp(){const h=E('help');if(h)h.onclick=async()=>{try{await api({action:'help',code});h.textContent='Jens is gewaarschuwd';}catch(e){}};}
-  if(E('toggle'))E('toggle').onclick=()=>{showQ(false);if(player){player.ended=false;player.load(0);AUD.play().catch(()=>{});}};
-  if(E('check')){const inp=E('ans');const go=async()=>{if(E('q').classList.contains('hidden')){showQ(true);return;}const a=inp.value.trim();if(!a){inp.focus();return;}E('check').disabled=true;try{const r=await api({action:'answer',code,answer:a});if(r.ok){S=r.state;render();}else{err(esc(r.message));E('check').disabled=false;inp.select();}}catch(e){err(esc(e.message));E('check').disabled=false;}};E('check').onclick=go;inp.onkeydown=e=>{if(e.key==='Enter')go()};}
+  if(E('toggle'))E('toggle').onclick=()=>{stage('ans');};
+  if(E('check')){const inp=E('ans');const go=async()=>{if(stageNow==='intro'){stage('q');return;}if(stageNow==='q'){stage('ans');return;}if(stageNow==='ans'){stage('in');return;}const a=inp.value.trim();if(!a){inp.focus();return;}E('check').disabled=true;try{const r=await api({action:'answer',code,answer:a});if(r.ok){S=r.state;render();}else{err(esc(r.message));E('check').disabled=false;inp.select();}}catch(e){err(esc(e.message));E('check').disabled=false;}};E('check').onclick=go;inp.onkeydown=e=>{if(e.key==='Enter')go()};}
   if(E('checkFinal'))E('checkFinal').onclick=async()=>{const a=['f1','f2','f3'].map(i=>E(i).value.trim());if(a.some(x=>!x)){err('Vul alle drie in.');return;}E('checkFinal').disabled=true;try{const r=await api({action:'final',code,answers:a});if(r.ok){S=r.state;render();}else{err(esc(r.message));E('checkFinal').disabled=false;}}catch(e){err(esc(e.message));E('checkFinal').disabled=false;}};
   if(E('dist')){watch();renderDist(E('dist'));}
 }
