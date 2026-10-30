@@ -25,7 +25,9 @@ header{padding:calc(var(--sat) + 16px) 22px 0;flex:none}
 .bars i{flex:1;height:3px;background:#262626}
 .bars i.done{background:var(--red2)}.bars i.cur{background:#fff}
 .where{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink2);margin-top:12px;height:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 22px;text-align:center;min-height:0;overflow:hidden}
+main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 22px;text-align:center;min-height:0;overflow-y:auto;overflow-x:hidden}
+main>*{flex:none}
+.miniwrap{display:flex;flex-direction:column;align-items:center}main .miniwrap .disc{width:112px;height:112px;margin-bottom:8px}.miniwrap .disc .pb{inset:10px;box-shadow:inset 0 0 0 14px #0d0d0d,inset 0 0 0 15px #1e1e1e,0 10px 30px rgba(0,0,0,.6)}.miniwrap .disc .pb svg{width:28px;height:28px}.miniwrap .ptitle{font-size:18px}.miniwrap .ptime{margin-top:4px}
 footer{flex:none;padding:12px 22px calc(var(--sab) + 18px);display:flex;gap:10px}
 h1{font-family:var(--disp);font-size:46px;font-weight:400;letter-spacing:.03em;line-height:.95;text-transform:uppercase;color:var(--inkp)}
 h2{font-family:var(--disp);font-size:30px;font-weight:400;letter-spacing:.03em;line-height:1;text-transform:uppercase;color:var(--inkp)}
@@ -62,7 +64,7 @@ h2{font-family:var(--disp);font-size:30px;font-weight:400;letter-spacing:.03em;l
 .sub{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink2);line-height:1.7;margin-top:16px}
 .rule{width:56px;height:4px;background:var(--red);margin:22px auto 0}
 /* player */
-.disc{position:relative;width:176px;height:176px;margin:0 0 14px}
+.disc{position:relative;width:176px;height:176px;margin:0 0 14px;flex:none}
 .disc svg.ring{position:absolute;inset:0;transform:rotate(-90deg)}
 .disc .pb{position:absolute;inset:14px;border-radius:50%;background:#141414;border:1px solid #2a2a2a;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:inset 0 0 0 22px #0d0d0d,inset 0 0 0 23px #1e1e1e,0 10px 30px rgba(0,0,0,.6)}
 .disc .pb svg{width:40px;height:40px;fill:#fff}
@@ -166,7 +168,8 @@ setInterval(()=>{if(!boosted||!AN||AUD.paused||AUD.currentTime<2)return;const d=
 function unlock(){if(unlocked)return;unlocked=true;try{route();if(ACX&&ACX.state==='suspended')ACX.resume();AUD.src=SILENT;AUD.play().catch(()=>{});}catch(e){}}
 document.addEventListener('touchend',unlock,{once:true,passive:true});document.addEventListener('click',unlock,{once:true});
 document.addEventListener('touchend',()=>{if(ACX&&ACX.state==='suspended')ACX.resume();},{passive:true});document.addEventListener('click',()=>{if(ACX&&ACX.state==='suspended')ACX.resume();});
-function Player(urls,title,onEnd){this.urls=urls||[];this.i=0;this.title=title;this.onEnd=onEnd;this.ended=false;}
+const PLAYED=new Set();
+function Player(urls,title,onEnd){this.urls=urls||[];this.i=0;this.title=title;this.onEnd=onEnd;this.ended=false;this.key=(S&&S.team?S.team.code+'|'+S.team.step_index+'|'+S.team.phase:'')+'|'+title;}
 Player.prototype.html=function(){return `<div class="disc" id="disc"><svg class="ring" viewBox="0 0 200 200"><circle cx="100" cy="100" r="96" stroke="#232323" stroke-width="3" fill="none"/><circle id="ring" cx="100" cy="100" r="96" stroke="#e5162f" stroke-width="3" fill="none" stroke-dasharray="603" stroke-dashoffset="603" stroke-linecap="round"/></svg><div class="pb" id="pb">${PLAY}</div></div><div class="ptitle">${esc(this.title)}</div><div class="ptime" id="ptime">${this.urls.length?'0:00':'Fragment volgt'}</div>`;};
 Player.prototype.bind=function(autoplay){const me=this;const ids=me.ids||{pb:'pb',disc:'disc',ring:'ring',pt:'ptime'};const pb=document.getElementById(ids.pb),disc=document.getElementById(ids.disc),ring=document.getElementById(ids.ring),pt=document.getElementById(ids.pt);if(!pb||!me.urls.length)return;
   me.load=i=>{me.i=i;AUD.pause();AUD.loop=false;AUD.src=me.urls[i];AUD.load();
@@ -175,7 +178,7 @@ Player.prototype.bind=function(autoplay){const me=this;const ids=me.ids||{pb:'pb
     AUD.onended=()=>{if(me.i+1<me.urls.length){setTimeout(()=>{me.load(me.i+1);AUD.play().catch(()=>{});},900);}else{disc.classList.remove('playing');pb.innerHTML=PLAY;ring.style.strokeDashoffset=0;me.ended=true;if(me.onEnd)me.onEnd();}};
     AUD.onerror=()=>{if(boosted||AUD.crossOrigin){unboost();return;}pt.textContent='Fragment kon niet laden';};};
   me.load(0);pb.onclick=()=>{unlock();if(AUD.paused){if(me.ended){me.ended=false;me.load(0);}AUD.play().catch(()=>{});}else AUD.pause();};
-  if(autoplay&&unlocked)AUD.play().catch(()=>{});};
+  if(autoplay&&unlocked&&!PLAYED.has(me.key)){PLAYED.add(me.key);AUD.play().catch(()=>{});}};
 Player.prototype.stop=function(){AUD.pause();AUD.onended=null;AUD.ontimeupdate=null;AUD.onplay=null;AUD.onpause=null;};
 function killPlayer(){if(player){player.stop();player=null;}}
 
@@ -217,7 +220,7 @@ function vBrief(st){const t=S.team;player=new Player(st.audio,'Teambriefing');co
   return shell(st,`${st.photo?`<div class="polaroid"><img src="${esc(st.photo)}" alt=""></div>`:''}<div class="paper c tape l" style="padding-top:26px"><div class="lbl">Jullie verdachte</div><h1>${esc(t.suspect)}</h1></div><div class="sp"></div>${player.html()}<div class="pintro"><b style="color:#fff">Eerste stop:</b> ${esc(st.nextHint||'')}</div><div class="err" id="err"></div>`,
    `<button class="btn ${rel?'':'quiet'}" id="next">${rel?'We gaan op pad':'Wachten op de start'}</button>`,{title:'Briefing'});}
 function vTravel(st){const ra=st.routeAudio&&st.routeAudio.length;if(ra)player=new Player(st.routeAudio,'Waar moet je heen');
-  return shell(st,`${ra?player.html()+'<div class="sp"></div>':''}<div class="paper c r tape"><div class="lbl">Volgende plek</div><h2>${esc(st.hint)}</h2></div><div class="chip" id="dist"><span class="dot"></span>Locatie zoeken</div><div class="err" id="err"></div>`,
+  return shell(st,`${ra?'<div class="miniwrap">'+player.html()+'</div><div class="sp"></div>':''}<div class="paper c r tape"><div class="lbl">Volgende plek</div><h2>${esc(st.hint)}</h2></div><div class="chip" id="dist"><span class="dot"></span>Locatie zoeken</div><div class="err" id="err"></div>`,
    `<button class="btn" id="arrive">We zijn op de locatie</button>`,{title:'Onderweg naar stop '+(st.n||'')});}
 function vStop(st){const hasIntro=st.audioIntro&&st.audioIntro.length;const ans=(st.audioAns&&st.audioAns.length)?st.audioAns:st.audio;
   if(!st.question){player=new Player((hasIntro?st.audioIntro:[]).concat(ans||[]),st.audioLabel||'Fragment',()=>{const b=document.getElementById('done');if(b){b.classList.remove('quiet');b.textContent='Verder';}const m=document.getElementById('mon');if(m&&m.reveal)m.reveal();});
@@ -254,7 +257,7 @@ function bind(st){if(player)player.bind(true);bindMonitor();
   if(E('done'))E('done').onclick=async()=>{const b=E('done');b.disabled=true;try{const r=await api({action:'done',code});if(r.ok){S=r.state;render();}else{err(esc(r.message));b.disabled=false;}}catch(e){err(esc(e.message));b.disabled=false;}};
   if(E('dist')){watch();renderDist(E('dist'));}
 }
-function renderDist(el){const st=S.steps[S.team.step_index],stop=st&&S.config.stops[st.stop];if(!stop||!lastPos){el.innerHTML='<span class="dot"></span>Locatie zoeken';return;}const m=Math.round(hav(lastPos,stop));el.innerHTML=m<=S.config.radius?'<span class="dot"></span><b>Je bent op de plek</b>':`<span class="dot"></span>Nog <b>${m} m</b>`;}
+function renderDist(el){const st=S.steps[S.team.step_index],stop=st&&S.config.stops[st.stop];if(!stop||!lastPos){el.innerHTML='<span class="dot"></span>Locatie zoeken';return;}const m=Math.round(hav(lastPos,stop));el.innerHTML=m<=S.config.radius?'<span class="dot"></span><b>Je bent op de plek</b>':`<span class="dot"></span>Nog&nbsp;<b>${m} m</b>`;}
 
 
 /* camera footage */
@@ -282,7 +285,7 @@ function showCall(c){AUD.pause();
 
 /* polling */
 function startPoll(){clearInterval(pollTimer);pollTimer=setInterval(async()=>{if(!code)return;try{const n=await api({action:S&&S.admin?'admin_state':'state',code});
-  const changed=JSON.stringify(n.team)!==JSON.stringify(S.team)||JSON.stringify(n.config.released)!==JSON.stringify(S.config.released)||(n.admin&&JSON.stringify(n.teams)!==JSON.stringify(S.teams));
+  const strip=t=>{const x={...t};delete x.last_lat;delete x.last_lng;delete x.last_seen;delete x.last_acc;return x;};const changed=JSON.stringify(strip(n.team))!==JSON.stringify(strip(S.team))||JSON.stringify(n.config.released)!==JSON.stringify(S.config.released)||(n.admin&&JSON.stringify(n.teams)!==JSON.stringify(S.teams));
   if(changed){const playing=!AUD.paused;S=n;if(!playing&&!callLayer.innerHTML)render();}}catch(e){}},S&&S.admin?6000:12000);}
 
 /* admin */
