@@ -1,4 +1,2 @@
-112-operator.mp3
-112-beller.mp3
-op-brug.mp3
-op-slot.mp3
+call1v2-fx.mp3
+call2v2-fx.mp3
