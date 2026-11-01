@@ -19,6 +19,8 @@ body{background:var(--bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.or
 header{padding:calc(var(--sat) + 16px) 22px 0;flex:none}
 .hl{display:flex;align-items:center;justify-content:space-between;height:40px}
 .team{font-family:var(--disp);font-size:16px;letter-spacing:.1em;text-transform:uppercase;background:var(--red);color:#fff;padding:7px 11px 5px;line-height:1}
+.clock.blink{animation:blink 1s steps(2) infinite}@keyframes blink{50%{opacity:.25}}
+.maps{display:block;text-align:center;margin:10px 16px 0;font-size:13px;color:#bfae9a;text-decoration:underline;opacity:.85}
 .clock{font-family:var(--disp);font-size:30px;letter-spacing:.04em;line-height:1;color:#fff;font-variant-numeric:tabular-nums}
 .clock.low{color:var(--red2)}
 .bars{display:flex;gap:4px;margin-top:12px}
@@ -184,6 +186,8 @@ AUD=newEl();
 function route(){if(boosted||!BOOST)return;try{ACX=ACX||new (window.AudioContext||window.webkitAudioContext)();const src=ACX.createMediaElementSource(AUD);const comp=ACX.createDynamicsCompressor();comp.threshold.value=-24;comp.knee.value=20;comp.ratio.value=6;comp.attack.value=0.003;comp.release.value=0.25;const g=ACX.createGain();g.gain.value=2.2;AN=ACX.createAnalyser();AN.fftSize=512;src.connect(comp);comp.connect(g);g.connect(AN);AN.connect(ACX.destination);boosted=true;}catch(e){BOOST=false;}}
 function unboost(){BOOST=false;boosted=false;AN=null;try{AUD.pause();}catch(e){}const i=player?player.i:0,t=AUD.currentTime||0,was=!AUD.paused;AUD=newEl();if(player&&player.load){player.load(i);try{AUD.currentTime=t;}catch(e){}if(was)AUD.play().catch(()=>{});}}
 setInterval(()=>{if(!boosted||!AN||AUD.paused||AUD.currentTime<2)return;const d=new Uint8Array(AN.fftSize);AN.getByteTimeDomainData(d);let s=0;for(let i=0;i<d.length;i++)s+=Math.abs(d[i]-128);if(s===0)unboost();},1000);
+let wl=null;async function keepAwake(){try{if('wakeLock' in navigator){wl=await navigator.wakeLock.request('screen');}}catch(e){}}
+let hiddenAt=0;document.addEventListener('visibilitychange',()=>{if(document.hidden){hiddenAt=Date.now();}else{keepAwake();if(S&&!S.admin&&S.team&&hiddenAt&&Date.now()-hiddenAt>20000&&S.team.step_index>0&&!S.team.finished_at){setTimeout(()=>showMsg('Jullie waren even weg. Ik niet.',{hold:7}),1200);}hiddenAt=0;}});
 function unlock(){if(unlocked)return;unlocked=true;try{route();if(ACX&&ACX.state==='suspended')ACX.resume();AUD.src=SILENT;AUD.play().catch(()=>{});FX.src=SILENT;FX.play().catch(()=>{});}catch(e){}}
 document.addEventListener('touchend',unlock,{once:true,passive:true});document.addEventListener('click',unlock,{once:true});
 document.addEventListener('touchend',()=>{if(ACX&&ACX.state==='suspended')ACX.resume();},{passive:true});document.addEventListener('click',()=>{if(ACX&&ACX.state==='suspended')ACX.resume();});
@@ -205,7 +209,7 @@ function killPlayer(){if(player){player.stop();player=null;}}
 function expired(){return S&&S.config&&S.config.deadline&&Date.now()>Date.parse(S.config.deadline);}
 function leftMs(){return S&&S.config&&S.config.deadline?Date.parse(S.config.deadline)-Date.now():null;}
 function leftTxt(){const ms=leftMs();if(ms===null)return '';if(ms<=0)return '0:00';const s=Math.floor(ms/1000);const h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=s%60;return (h?h+':':'')+String(m).padStart(h?2:1,'0')+':'+String(x).padStart(2,'0');}
-setInterval(()=>{const c=document.getElementById('clock');if(c){c.textContent=leftTxt();const ms=leftMs();c.classList.toggle('low',ms!==null&&ms<600000);}if(S&&!S.admin&&expired()&&!document.getElementById('timeup')&&!(S.team&&S.team.finished_at))render();},1000);
+setInterval(()=>{const c=document.getElementById('clock');if(c){c.textContent=leftTxt();c.classList.toggle('blink',(leftMs()||1e9)<300000);const ms=leftMs();c.classList.toggle('low',ms!==null&&ms<600000);}if(S&&!S.admin&&expired()&&!document.getElementById('timeup')&&!(S.team&&S.team.finished_at))render();},1000);
 
 /* screens */
 function shell(st,main,foot,opts={}){const t=S.team;const bars=S.steps.map((s,i)=>`<i class="${i<t.step_index?'done':i===t.step_index?'cur':''}"></i>`).join('');
@@ -231,20 +235,20 @@ function renderIntro(msg){
     document.getElementById('start').onclick=()=>{unlock();screen='geo';renderIntro();};return;}
   if(screen==='geo'){app.innerHTML=`<header></header><main class="fade"><div class="paper c tape"><div class="lbl">Voordat we beginnen</div><h2>We moeten weten waar je bent</h2><p>De app kijkt of je op de juiste plek staat. Zonder locatie kom je niet verder. Druk op de knop en kies <b>Toestaan</b>.</p><div class="err" id="err">${esc(msg||'')}</div></div></main><footer><button class="btn" id="geo">Locatie aanzetten</button></footer>`;
     document.getElementById('geo').onclick=async()=>{const b=document.getElementById('geo');b.disabled=true;b.textContent='Even wachten';try{lastPos=await getPos();screen='code';renderIntro();}catch(e){renderIntro(e.message);}};return;}
-  app.innerHTML=`<header></header><main class="fade"><div class="paper tape"><span class="stampw">Vertrouwelijk</span><div class="lbl">Dossier 98-1103</div><div class="ln"><b>Zaak</b><span>Marloes Hendriks, 1998</span></div><div class="ln"><b>Status</b><span>Nooit opgelost</span></div><input id="code" placeholder="Code uit je dossiermap" autocapitalize="characters" autocomplete="off" spellcheck="false"><div class="err" id="err">${esc(msg||'')}</div>${BLOOD}</div></main><footer><button class="btn" id="go">Open dossier</button></footer>`;
+  app.innerHTML=`<header></header><main class="fade"><div class="paper tape"><span class="stampw">Vertrouwelijk</span><div class="lbl">Dossier 98-1103</div><div class="ln"><b>Zaak</b><span>Marloes Hendriks, 1998</span></div><div class="ln"><b>Status</b><span>Nooit opgelost</span></div><input id="code" placeholder="Code uit je dossiermap" autocapitalize="characters" autocomplete="off" spellcheck="false"><div class="err" id="err">${esc(msg||'')}</div><p style="margin:14px 0 0;font-size:14px;line-height:1.45;color:#d8c9b2"><b style="color:#fff">Voordat je verdergaat:</b> volume helemaal open. Geluid niet op stil. Scherm aan laten en deze pagina open houden. Als je telefoon uitgaat, weet hij dat.</p>${BLOOD}</div></main><footer><button class="btn" id="go">Open dossier</button></footer>`;
   const inp=document.getElementById('code');const go=async()=>{const c=inp.value.trim().toUpperCase().replace(/\s+/g,'-');if(!c)return;document.getElementById('err').textContent='';
-    try{S=await api({action:'login',code:c});code=c;try{localStorage.setItem(LS,c)}catch(e){}startPoll();render();}catch(e){document.getElementById('err').textContent=e.message;}};
+    keepAwake();try{S=await api({action:'login',code:c});code=c;try{localStorage.setItem(LS,c)}catch(e){}startPoll();render();}catch(e){document.getElementById('err').textContent=e.message;}};
   document.getElementById('go').onclick=go;inp.onkeydown=e=>{if(e.key==='Enter')go()};
 }
 function vBrief(st){const t=S.team;player=new Player(st.audio,'Teambriefing');const rel=S.config.released.start||(t.code||'').startsWith('TEST');
   return shell(st,`${st.photo?`<div class="polaroid"><img src="${esc(st.photo)}" alt=""></div>`:''}<div class="paper c tape l" style="padding-top:26px"><div class="lbl">Jullie verdachte</div><h1>${esc(t.suspect)}</h1></div><div class="sp"></div>${player.html()}<div class="pintro"><b style="color:#fff">Eerste stop:</b> ${esc(st.nextHint||'')}</div><div class="err" id="err"></div>`,
    `<button class="btn ${rel?'':'quiet'}" id="next">${rel?'We gaan op pad':'Wachten op de start'}</button>`,{title:'Briefing'});}
 function vTravel(st){const ra=st.routeAudio&&st.routeAudio.length;const fin=st.key==='final';if(ra)player=new Player(st.routeAudio,fin?'Aflevering 7 · Het slot':'Waar moet je heen');
-  return shell(st,`${ra?(fin?player.html():'<div class="miniwrap">'+player.html()+'</div>')+'<div class="sp"></div>':''}<div class="paper c r tape"><div class="lbl">${fin?'Waar het eindigt':'Waar het spoor heen leidt'}</div><h2>${esc(st.hint)}</h2></div><div class="chip" id="dist"><span class="dot"></span>Locatie zoeken</div><div class="err" id="err"></div>`,
-   `<button class="btn" id="arrive">We zijn op de locatie</button>`,{title:fin?'Het laatste spoor':'Spoor '+(st.n||'')+' van 5'});}
+  return shell(st,`${ra?(fin?player.html():'<div class="miniwrap">'+player.html()+'</div>')+'<div class="sp"></div>':''}<div class="paper c r tape"><div class="lbl">${fin?'Waar het eindigt':'Waar het spoor heen leidt'}</div><h2>${esc(st.hint)}</h2></div><div class="chip" id="dist"><span class="dot"></span>Locatie zoeken</div>${st.maps?`<a class="maps" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(st.maps)}&travelmode=walking" target="_blank" rel="noopener">Weet je de plek niet? Open de looproute in Google Maps</a>`:''}<div class="err" id="err"></div>`,
+   `<button class="btn" id="arrive">We zijn op de locatie</button>`,{title:fin?'Het laatste spoor':st.key==='hek'?'Tussenstop':'Spoor '+(st.n||'')+' van 5'});}
 function vStop(st){const hasIntro=st.audioIntro&&st.audioIntro.length;const ans=(st.audioAns&&st.audioAns.length)?st.audioAns:st.audio;
   if(!st.question){player=new Player((hasIntro?st.audioIntro:[]).concat(ans||[]),st.audioLabel||'Fragment',()=>{const b=document.getElementById('done');if(b){b.classList.remove('quiet');b.textContent='Verder';}const m=document.getElementById('mon');if(m&&m.reveal)m.reveal();});
-    return shell(st,`${player.html()}<div class="pintro">${esc(st.intro||'')}</div>${monitor(st.key,true)}<div class="sp"></div><div class="paper c tape"><div class="lbl">De laatste opname van Marloes</div><h2 style="font-size:22px">Luister. Daarna weten jullie waar de laatste twee sporen heen leiden.</h2></div><div class="err" id="err"></div>`,`<button class="btn quiet" id="done">Eerst luisteren</button>`,{title:'Stop '+st.n+' · '+st.title});}
+    return shell(st,`${player.html()}<div class="pintro">${esc(st.intro||'')}</div>${monitor(st.key,true)}<div class="sp"></div><div class="paper c tape"><div class="lbl">${st.key==='hek'?'Het hek':'De laatste opname van Marloes'}</div><h2 style="font-size:22px">${st.key==='hek'?'Geen opdracht. Luister, en blijf hier niet te lang staan.':'Luister. Daarna weten jullie waar de laatste twee sporen heen leiden.'}</h2></div><div class="err" id="err"></div>`,`<button class="btn quiet" id="done">Eerst luisteren</button>`,{title:st.key==='hek'?'Tussenstop · '+st.title:'Stop '+st.n+' · '+st.title});}
   player=new Player(hasIntro?st.audioIntro:ans,st.audioLabel||'Fragment',()=>{if(hasIntro)stage('q');else stage('in');});
   return shell(st,`<div id="s_intro">${player.html()}<div class="pintro">${esc(st.intro||'')}</div></div>
 <div id="s_q" class="hidden"><div class="paper c tape"><span class="stampw">Opdracht ${st.n}</span><div class="lbl">Luister. Eén ding klopt niet.</div><h2 style="font-size:24px">${esc(st.question)}</h2>${st.do?`<p><b>Eerst dit:</b> ${esc(st.do)}</p>`:''}</div></div>
@@ -259,7 +263,7 @@ function stage(k){const st=S.steps[S.team.step_index];stageNow=k;['intro','q','a
   else if(k==='ans'){ck.textContent='Naar het antwoord';const ans=(st.audioAns&&st.audioAns.length)?st.audioAns:st.audio;killPlayer();player=new Player(ans,st.audioLabel||'Fragment',()=>stage('in'));player.ids={pb:'pb2',disc:'disc2',ring:'ring2',pt:'ptime2'};player.bind(true);}
   else if(k==='in'){AUD.pause();ck.textContent='Controleer';const i=document.getElementById('ans');if(i)setTimeout(()=>i.focus(),50);}
 }
-function vSolved(st){return shell(st,`<div class="paper c tape"><span class="stampw" style="transform:rotate(-8deg);left:12px;right:auto">Klopt</span><div class="lbl" style="margin-top:8px">Wat we nu weten</div><h2>${esc(st.after||'')}</h2></div>${monitor(st.key)}<div class="err" id="err"></div>`,`<button class="btn" id="next">Verder</button>`,{title:'Stop '+st.n+' · '+st.title});}
+function vSolved(st){return shell(st,`<div class="paper c tape"><span class="stampw" style="transform:rotate(-8deg);left:12px;right:auto">Klopt</span><div class="lbl" style="margin-top:8px">Wat we nu weten</div><h2>${esc(st.after||'')}</h2></div>${monitor(st.key)}<div class="err" id="err"></div>`,`<button class="btn" id="next">Verder</button>`,{title:(st.key==='hek'?'Tussenstop':'Stop '+st.n)+' · '+st.title});}
 function vWait(st){return shell(st,`<div class="paper c tape"><div class="lbl">Tussenstop</div><h1>Hij luistert ook</h1><p>${esc(st.waitText||'')}</p></div><div class="chip"><span class="dot"></span>Geen opdracht. Het bandje volgt.</div>`,'',{title:st.title});}
 function vFinal(st){const t=S.team;
   if(t.phase==='travel')return vTravel(st);
@@ -306,9 +310,14 @@ function flashCam(ms){const f=document.getElementById('flash');f.style.backgroun
 function clockGlitch(){const c=document.getElementById('clock'),t=document.querySelector('.team');if(!c||!t)return;const name=t.textContent;c.textContent='02:50:00';c.classList.add('low');t.textContent='MARLOES';t.classList.add('alt');glitch(300);setTimeout(()=>{c.textContent=leftTxt();c.classList.remove('low');t.textContent=name;t.classList.remove('alt');},1300);}
 let evTimers=[];
 function scheduleEvents(st){evTimers.forEach(clearTimeout);evTimers=[];if(!S||S.admin||!S.team)return;const t=S.team;const at=(sec,k,fn)=>{if(!once.peek(k))return;evTimers.push(setTimeout(()=>{if(once(k))fn();},sec*1000));};
-  if(t.phase==='travel'&&st.n===1)at(40,'msg1',()=>showMsg('Tel jullie even. Ik tel er één meer.'));
+  const minsLeft=()=>{const ms=leftMs();return ms===null?null:Math.max(1,Math.ceil(ms/60000));};
+  if(t.phase==='travel'&&t.step_index===1)at(40,'msg1',()=>showMsg('Tel jullie even. Ik tel er één meer.'));
+  if(t.phase==='travel'&&st.key==='hek')at(35,'msghek',()=>showMsg('Niet stilstaan.',{hold:5}));
+  if(t.phase==='travel'&&st.key==='B')at(60,'msgB',()=>showMsg('Kijk niet om. Loop gewoon door.'));
+  if(t.phase==='travel'&&st.key==='C')at(190,'msgC',()=>showMsg('Jullie lopen te langzaam.',{hold:6}));
   if(t.phase==='wait')at(80,'msg2',()=>showMsg('Ik zit twee tafels achter jullie.'));
-  if(t.phase==='travel'&&(st.n===4||st.n===5))at(45,'clock',clockGlitch);
+  if(t.phase==='travel'&&st.key==='D'){at(45,'clock',clockGlitch);at(100,'msgD',()=>showMsg('Blijf lopen. Zij bleef staan.',{hold:7}));}
+  if(t.phase==='travel'&&st.key==='E'){at(50,'clock2',clockGlitch);at(70,'msgE',()=>{const m=minsLeft();showMsg(m?`Nog ${m} minuten. Dan gaat de deur dicht.`:'Dan gaat de deur dicht.',{hold:7});});}
   if(t.phase==='travel'&&st.key==='final')at(160,'msg3',()=>showMsg('Zelfde kruk. Kom maar.',{hold:9}));
   if(t.phase==='solved'&&st.key==='final')at(25,'kruk',()=>showMsg('Ik zit twee krukken van jullie vandaan.',{hold:10}));
   if(t.phase==='solved'&&st.whisperAudio&&st.whisperAudio.length)at(1.2,'wh_'+st.key,()=>{try{AUD.pause();AUD.onended=null;AUD.ontimeupdate=null;AUD.loop=false;AUD.src=st.whisperAudio[0];AUD.play().catch(()=>{});}catch(e){}});
@@ -318,7 +327,7 @@ function afterCall(key){if(key==='C'){setTimeout(()=>flashCam(2200),900);}if(key
 /* random static when idle, and the watcher */
 let lastTouch=Date.now(),lastListen=0;document.addEventListener('touchstart',()=>{lastTouch=Date.now();},{passive:true});document.addEventListener('click',()=>{lastTouch=Date.now();});
 setInterval(()=>{if(!S||S.admin||!S.team||!unlocked)return;if(!AUD.paused||callLayer.innerHTML||document.getElementById('timeup'))return;
-  if(Math.random()<0.22)glitch(300);
+  if(Math.random()<0.35)glitch(300);
   const idle=Date.now()-lastTouch;if(idle>45000&&Date.now()-lastListen>120000){lastListen=Date.now();const l=document.getElementById('listen');l.classList.remove('on');void l.offsetWidth;l.classList.add('on');sfx('static',.35);vib([40,40,40]);setTimeout(()=>l.classList.remove('on'),1400);}},15000);
 
 /* the call */
