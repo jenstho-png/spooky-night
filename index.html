@@ -97,6 +97,10 @@ h2{font-family:var(--disp);font-size:30px;font-weight:400;letter-spacing:.03em;l
 .adm main{justify-content:flex-start;text-align:left;align-items:stretch;padding-top:6px;overflow-y:auto}
 .card{background:#141414;border:1px solid #222;padding:16px;margin-bottom:12px}
 .card h3{font-family:var(--disp);font-size:22px;letter-spacing:.04em;margin-bottom:10px;color:#fff}
+.amap{width:100%;height:330px;border:1px solid #222;margin-bottom:12px;background:#111}
+.tstat{font-size:13px;color:#ddd;line-height:1.45}.tstat i{font-style:normal;color:var(--ink2)}
+.calrow{padding:10px 0;border-top:1px solid #262626}.calrow p{font-size:12px;color:var(--ink2);margin:6px 0 0;line-height:1.45}.calrow .ok{color:#30d158;font-size:12px;margin-left:8px}
+.tm{width:26px;height:26px;border-radius:50%;color:#fff;font:700 13px/26px sans-serif;text-align:center;border:2px solid #fff;box-shadow:0 0 6px #000}
 .row{display:flex;justify-content:space-between;gap:10px;padding:12px 0;border-top:1px solid #262626}
 .row .l b{font-size:14px;color:#fff}.row .l span{display:block;color:var(--ink2);font-size:12px;margin-top:2px}
 .mini{font:700 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;padding:9px 11px;border:0;background:#2a2a2a;color:#fff;cursor:pointer;margin:3px 3px 0 0}
@@ -235,7 +239,7 @@ function renderIntro(msg){
     document.getElementById('start').onclick=()=>{unlock();screen='geo';renderIntro();};return;}
   if(screen==='geo'){app.innerHTML=`<header></header><main class="fade"><div class="paper c tape"><div class="lbl">Voordat we beginnen</div><h2>We moeten weten waar je bent</h2><p>De app kijkt of je op de juiste plek staat. Zonder locatie kom je niet verder. Druk op de knop en kies <b>Toestaan</b>.</p><div class="err" id="err">${esc(msg||'')}</div></div></main><footer><button class="btn" id="geo">Locatie aanzetten</button></footer>`;
     document.getElementById('geo').onclick=async()=>{const b=document.getElementById('geo');b.disabled=true;b.textContent='Even wachten';try{lastPos=await getPos();screen='code';renderIntro();}catch(e){renderIntro(e.message);}};return;}
-  app.innerHTML=`<header></header><main class="fade"><div class="paper tape"><span class="stampw">Vertrouwelijk</span><div class="lbl">Dossier 98-1103</div><div class="ln"><b>Zaak</b><span>Marloes Hendriks, 1998</span></div><div class="ln"><b>Status</b><span>Nooit opgelost</span></div><input id="code" placeholder="Code uit je dossiermap" autocapitalize="characters" autocomplete="off" spellcheck="false"><div class="err" id="err">${esc(msg||'')}</div><p style="margin:14px 0 0;font-size:14px;line-height:1.45;color:#d8c9b2"><b style="color:#fff">Voordat je verdergaat:</b> volume helemaal open. Geluid niet op stil. Scherm aan laten en deze pagina open houden. Als je telefoon uitgaat, weet hij dat.</p>${BLOOD}</div></main><footer><button class="btn" id="go">Open dossier</button></footer>`;
+  app.innerHTML=`<header></header><main class="fade"><div class="paper tape"><span class="stampw">Vertrouwelijk</span><div class="lbl">Dossier 98-1103</div><div class="ln"><b>Zaak</b><span>Marloes Hendriks, 1998</span></div><div class="ln"><b>Status</b><span>Nooit opgelost</span></div><input id="code" placeholder="Code uit je dossiermap" autocapitalize="characters" autocomplete="off" spellcheck="false"><div class="err" id="err">${esc(msg||'')}</div><p style="margin:14px 0 0;font-size:14px;line-height:1.45;color:#2b241c"><b style="color:#000">Voordat je verdergaat:</b> volume helemaal open. Geluid niet op stil. Scherm aan laten en deze pagina open houden. Als je telefoon uitgaat, weet hij dat.</p>${BLOOD}</div></main><footer><button class="btn" id="go">Open dossier</button></footer>`;
   const inp=document.getElementById('code');const go=async()=>{const c=inp.value.trim().toUpperCase().replace(/\s+/g,'-');if(!c)return;document.getElementById('err').textContent='';
     keepAwake();try{S=await api({action:'login',code:c});code=c;try{localStorage.setItem(LS,c)}catch(e){}startPoll();render();}catch(e){document.getElementById('err').textContent=e.message;}};
   document.getElementById('go').onclick=go;inp.onkeydown=e=>{if(e.key==='Enter')go()};
@@ -354,16 +358,39 @@ function startPoll(){clearInterval(pollTimer);pollTimer=setInterval(async()=>{if
   if(pendingRender&&AUD.paused&&!callLayer.innerHTML&&!(document.activeElement&&document.activeElement.tagName==='INPUT')){pendingRender=false;render();}}catch(e){}},S&&S.admin?6000:12000);}
 /* admin */
 function autoTxt(a){if(!a||!a.corona)return'';const d=new Date(a.corona);return `<p style="opacity:.7;font-size:13px;margin:8px 0 0">Corona gaat automatisch vrij om ${d.toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'})}. De knop is alleen nodig als je eerder wilt.</p>`;}
-function renderAdmin(){const stops=S.config.stops,rel=S.config.released||{};player=new Player(S.intro,'Opening · samen bij de start');
-  const rows=(S.teams||[]).map(t=>{const st=S.steps_for(t)[t.step_index];const stop=st&&stops[st.stop];let d='';if(t.last_lat&&stop)d=Math.round(hav({lat:t.last_lat,lng:t.last_lng},stop))+' m van '+st.title+', ';const seen=t.last_seen?Math.round((Date.now()-new Date(t.last_seen).getTime())/60000)+' min geleden':'nog niet gezien';
-    return `<div class="row"><div class="l"><b>${esc(t.name)}</b>${t.help?'<span class="badge help">hulp</span>':''}${t.finished_at?'<span class="badge ok">'+esc(t.duration)+'</span>':''}<span>${st?esc(st.title):'klaar'}, ${esc(t.phase)}</span><span>${d}${seen}</span><span>${esc(t.code)}</span></div><div><button class="mini red" data-op="skip" data-code="${esc(t.code)}">Zet door</button><button class="mini" data-op="back" data-code="${esc(t.code)}">Terug</button><button class="mini" data-op="clearhelp" data-code="${esc(t.code)}">Hulp ok</button><button class="mini" data-op="reset" data-code="${esc(t.code)}">Reset</button></div></div>`;}).join('');
+const TCOL=['#e5162f','#2f80ed','#f2c94c','#27ae60','#9b51e0'];const CALORDER=['A','K','B','S','P','H','E','D','W','C','F'];
+let amap=null,amapEl=null,amapLayer=null,leafletP=null;
+function loadLeaflet(){if(window.L)return Promise.resolve();if(leafletP)return leafletP;leafletP=new Promise((res,rej)=>{const c=document.createElement('link');c.rel='stylesheet';c.href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';document.head.appendChild(c);const j=document.createElement('script');j.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';j.onload=res;j.onerror=rej;document.head.appendChild(j);});return leafletP;}
+function phaseTxt(t,st){if(t.finished_at)return 'Binnen. Tijd '+esc(t.duration);if(!st)return 'klaar';const pl=esc(st.place||st.title);
+  if(st.key==='brief')return 'Nog bij de start (briefing)';
+  if(t.phase==='travel')return st.key==='final'?'Onderweg naar het einde ('+pl+')':'Onderweg naar '+pl+(st.n?' · stop '+st.n+' van 5':' · tussenstop');
+  if(t.phase==='wait')return 'Bij Corona, wacht op het bandje';
+  if(t.phase==='audio')return 'Bij '+pl+', luistert / doet de opdracht';
+  if(t.phase==='solved')return 'Bij '+pl+', opgelost, gaat zo verder';return esc(t.phase);}
+function drawMap(){const slot=document.getElementById('mapslot');if(!slot)return;
+  loadLeaflet().then(()=>{const stops=S.config.stops;
+    if(!amapEl){amapEl=document.createElement('div');amapEl.className='amap';}
+    slot.appendChild(amapEl);
+    if(!amap){amap=L.map(amapEl,{zoomControl:true,attributionControl:true});L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(amap);amap.fitBounds(Object.values(stops).map(p=>[p.lat,p.lng]),{padding:[20,20]});}
+    setTimeout(()=>amap.invalidateSize(),50);
+    if(amapLayer)amapLayer.remove();amapLayer=L.layerGroup().addTo(amap);
+    Object.keys(stops).forEach(k=>{const p=stops[k];L.circleMarker([p.lat,p.lng],{radius:5,color:'#000',weight:1,fillColor:'#aaa',fillOpacity:.9}).bindTooltip(esc(p.name),{direction:'top'}).addTo(amapLayer);});
+    (S.teams||[]).forEach((t,i)=>{if(!t.last_lat)return;const old=t.last_seen&&Date.now()-new Date(t.last_seen).getTime()>300000;const n=(t.name.match(/\d+/)||['T'])[0];
+      const ic=L.divIcon({className:'',html:`<div class="tm" style="background:${old?'#555':TCOL[i%TCOL.length]}">${esc(n)}</div>`,iconSize:[26,26],iconAnchor:[13,13]});
+      L.marker([t.last_lat,t.last_lng],{icon:ic}).bindTooltip(esc(t.name)+(old?' (al even niet gezien)':''),{direction:'top'}).addTo(amapLayer);});
+  }).catch(()=>{slot.innerHTML='<div class="tstat"><i>Kaart kon niet laden.</i></div>';});}
+function renderAdmin(){const stops=S.config.stops,rel=S.config.released||{},hints=S.config.hints||{};player=new Player(S.intro,'Opening · samen bij de start');
+  const rows=(S.teams||[]).map((t,i)=>{const st=S.steps_for(t)[t.step_index];const stop=st&&st.stop&&stops[st.stop];let d='';if(t.last_lat&&stop&&!t.finished_at&&t.phase==='travel')d=Math.round(hav({lat:t.last_lat,lng:t.last_lng},stop))+' m van de plek · ';const seen=t.last_seen?Math.round((Date.now()-new Date(t.last_seen).getTime())/60000)+' min geleden gezien':'nog niet gezien';
+    return `<div class="row"><div class="l"><b><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${TCOL[i%TCOL.length]};margin-right:6px"></span>${esc(t.name)}</b>${t.help?'<span class="badge help">vraagt hulp</span>':''}<div class="tstat">${phaseTxt(t,st)}<br><i>${d}${seen}</i></div></div><div><button class="mini red" data-op="skip" data-code="${esc(t.code)}">Zet door</button><button class="mini" data-op="back" data-code="${esc(t.code)}">Terug</button>${t.help?`<button class="mini" data-op="clearhelp" data-code="${esc(t.code)}">Hulp gezien</button>`:''}<button class="mini" data-op="reset" data-code="${esc(t.code)}">Reset</button></div></div>`;}).join('');
+  const cal=CALORDER.filter(k=>stops[k]).map(k=>{const p=stops[k];const when=p.cal?new Date(p.cal).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'}):'';return `<div class="calrow"><button class="mini" data-op="calib" data-stop="${k}">${esc(p.name)}</button>${when?`<span class="ok">geijkt ${when}</span>`:''}<p>${esc(hints[k]||'')}</p></div>`;}).join('');
   app.innerHTML=`<header><div class="hl"><span class="team">Spelleider</span><span class="clock" id="clock">${leftTxt()}</span></div></header><main style="align-items:center">${player.html()}<div class="sp"></div><div style="width:100%">
-   <div class="card"><h3>Vrijgeven</h3><button class="mini ${rel.start?'':'red'}" data-op="release" data-key="start">${rel.start?'Start is vrij':'Geef de start vrij'}</button><button class="mini ${rel.corona?'':'red'}" data-op="release" data-key="corona">${rel.corona?'Corona is vrij':'Geef Corona vrij'}</button>${autoTxt(S.config.auto_release)}</div>
-   <div class="card"><h3>Teams</h3>${rows}</div>
-   <div class="card"><h3>Stops ijken</h3><div style="font-size:12px;color:var(--ink2);margin:0 0 10px">Sta op de plek en druk op de knop. Straal ${S.config.radius} m.</div>${Object.keys(stops).map(k=>`<button class="mini" data-op="calib" data-stop="${k}">${esc(stops[k].name)}</button>`).join('')}<div class="err" id="err"></div></div></div></main><footer><button class="btn quiet" id="logout">Uitloggen</button></footer>`;
-  document.body.classList.add('adm');player.bind();
+   <div class="card"><h3>Waar is iedereen</h3><div id="mapslot"></div><div style="font-size:12px;color:var(--ink2)">Gekleurd rondje = team (grijs = langer dan 5 min niets van gehoord). Kleine grijze stip = stop. Ververst elke paar seconden.</div></div>
+   <div class="card"><h3>Teams</h3>${rows}<div style="font-size:12px;color:var(--ink2);margin-top:10px">"Zet door": team één stap verder (als iets niet werkt). "Vraagt hulp": het team kreeg de plek niet goed en drukte op "Vraag Jens"; app ze of loop erheen, en druk dan op "Hulp gezien".</div></div>
+   <div class="card"><h3>Corona</h3>${autoTxt(S.config.auto_release)}<button class="mini ${rel.corona?'':'red'}" data-op="release" data-key="corona" style="margin-top:8px">${rel.corona?'Corona is vrij':'Corona nu al vrijgeven'}</button></div>
+   <div class="card"><h3>Stops ijken</h3><div style="font-size:12px;color:var(--ink2);margin:0 0 6px">Ga staan waar de beschrijving zegt (dat lezen de teams ook), en druk dan op de knop van die plek.</div>${cal}<div class="err" id="err"></div></div></div></main><footer><button class="btn quiet" id="logout">Uitloggen</button></footer>`;
+  document.body.classList.add('adm');player.bind();drawMap();
   app.querySelectorAll('[data-op]').forEach(b=>b.onclick=async()=>{const op=b.dataset.op;b.disabled=true;try{
-    if(op==='calib'){const p=await getPos();S=await api({action:'admin',code,op:'calib',stop:b.dataset.stop,lat:p.lat,lng:p.lng});}
+    if(op==='calib'){b.textContent='Locatie ophalen…';const p=await getPos();S=await api({action:'admin',code,op:'calib',stop:b.dataset.stop,lat:p.lat,lng:p.lng});}
     else if(op==='release')S=await api({action:'admin',code,op:'release',key:b.dataset.key});
     else if(op==='reset'){if(!b.classList.contains('sure')){b.textContent='Zeker?';b.classList.add('sure');b.disabled=false;return;}S=await api({action:'admin',code,op:'reset',team:b.dataset.code});}
     else S=await api({action:'admin',code,op,team:b.dataset.code});render();}catch(e){const er=document.getElementById('err');if(er)er.textContent=e.message;b.disabled=false;}});
