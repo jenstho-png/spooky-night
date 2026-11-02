@@ -20,6 +20,7 @@ header{padding:calc(var(--sat) + 16px) 22px 0;flex:none}
 .hl{display:flex;align-items:center;justify-content:space-between;height:40px}
 .team{font-family:var(--disp);font-size:16px;letter-spacing:.1em;text-transform:uppercase;background:var(--red);color:#fff;padding:7px 11px 5px;line-height:1}
 .clock.blink{animation:blink 1s steps(2) infinite}@keyframes blink{50%{opacity:.25}}
+.chip.big{display:flex;flex-direction:column;align-items:center;padding:14px 28px;border:2px solid #333}.chip.big b{font:400 46px/1 var(--disp);letter-spacing:.02em;color:#fff}.chip.big small{font-size:12px;letter-spacing:.12em;margin-top:6px;color:var(--ink2)}.chip.big.here{border-color:#30d158}.chip.big.here b{color:#30d158;font-size:36px}
 .maps{display:block;text-align:center;margin:10px 16px 0;font-size:13px;color:#bfae9a;text-decoration:underline;opacity:.85}
 .clock{font-family:var(--disp);font-size:30px;letter-spacing:.04em;line-height:1;color:#fff;font-variant-numeric:tabular-nums}
 .clock.low{color:var(--red2)}
@@ -285,7 +286,7 @@ function bind(st){if(player)player.bind(true);bindMonitor();
   if(E('done'))E('done').onclick=async()=>{const b=E('done');b.disabled=true;try{const r=await api({action:'done',code});if(r.ok){S=r.state;render();}else{err(esc(r.message));b.disabled=false;}}catch(e){err(esc(e.message));b.disabled=false;}};
   if(E('dist')){watch();renderDist(E('dist'));}
 }
-function renderDist(el){const st=S.steps[S.team.step_index],stop=st&&S.config.stops[st.stop];if(!stop||!lastPos){el.innerHTML='<span class="dot"></span>Locatie zoeken';return;}const m=Math.round(hav(lastPos,stop));el.innerHTML=m<=S.config.radius?'<span class="dot"></span><b>Je bent op de plek</b>':`<span class="dot"></span>Nog&nbsp;<b>${m} m</b>`;}
+function renderDist(el){const st=S.steps[S.team.step_index],stop=st&&S.config.stops[st.stop];if(!stop||!lastPos){el.innerHTML='<span class="dot"></span>Locatie zoeken';return;}const m=Math.round(hav(lastPos,stop));el.classList.add('big');el.classList.toggle('here',m<=S.config.radius);el.innerHTML=m<=S.config.radius?'<b>Je bent er</b><small>Druk op de knop hieronder</small>':`<b>${m} m</b><small>nog te gaan</small>`;}
 
 
 /* camera footage */
